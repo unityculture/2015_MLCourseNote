@@ -1,0 +1,418 @@
+---
+title: "MachineLearning_Midterm"
+author: "103354021林敬昇、林子洋"
+date: "2015年11月25日"
+output:
+  html_document:
+    theme: spacelab
+    fig_width: 10
+    fig_height: 7.5
+    css: /Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/Midterm/styles.css
+---
+
+
+```{r setup, include=FALSE}
+options('scipen'=100,'digits'=2)
+knitr::opts_chunk$set(comment="",prompt=T,strip.white=F,warning=FALSE,message=F,echo=F)
+```
+
+```{r}
+library(data.table)
+library(dplyr)
+library(tidyr)
+library(gdata)
+library(stringr)
+library(DT)
+library(ggthemes)
+library(ggplot2)
+library(rgeos)
+library(maptools)
+library(rpart.plot)
+library(adabag)
+library(class)
+setwd('~/Documents/NCCU/ML/NCCU_ML_Note/lab/Midterm/')
+```
+
+# Outline
+
+- Questions
+- Solutions
+    - Exploratory Data Analaysis
+    - Q1
+    - Q2 
+    - Q3
+    - Q4
+
+## Questions
+
+- Suppose our goal is to develop the decision rules for classifying wines based on the cultivars. Construct the decision rules using: (i) Classification Tree; (ii) LDA; (iii) QDA; (v) Nearest Neighbor; and (vi) SVM to classify the wines. Evaluate and compare all the obtained decision rules, which one will you recommend?
+- Suppose there are 6 wines from unknown cultivars with the measurements of 13 constituents shown in “wine_test.txt”. Based the “classification tree” you obtained in Q1, perform two stable procedures “bagging” and “boosting” to classify the 6 wines. Are the classifications of the 6 wines the same as those obtained from the five decision rules in Q1 ?
+- Exclude the first column (class-id) of the “wine.txt” data, perform a cluster analysis using (i) one hierarchical tree method (with best selected linkage); (ii) one partitioning method; and (iii) the self-organizing maps.
+- Do the clustering results in Q3 recover the original classification of the wine based on class-id ?
+
+<br>
+<br>
+
+------
+
+# Solutions
+
+```{r}
+wine.data <- read.table('wine_data.txt',header= T)
+```
+
+In my opinion, before constructing any model, the first and foremost thing is doing Exploratory Data Analysis(Descriptive Statistics)
+
+Let's start from understanding the `wine data` !
+
+
+## Exploratory Data Analysis 
+
+As we seen, in aspect of tendency :
+
+- In the top 5 variables, the chemical results of `A-cultivars` are relative `high`
+- In the middle part, the chemical results of `B-cultivars` are relative `low`
+- In the bottom part, the chemical results of `C-cultivars` are relative `high`
+
+Following requires attention:
+
+- In `mg`, althoug the value of `B-cultivars` tend to `low`, there are some outliers higher than the values of `A-cultivars and C-cultivars` !
+- We need to keep this in our mind: there is some outlier which potentially may influece to the accuracy of classification.
+
+```{r}
+similiar <- c('phenols','proanth','od','falvanoids','hue',
+              'alcohol','color','proline','mg','ash',
+              'alc.ash','nonfl.phenols','malic.acid')
+wine.data %>% 
+  group_by(class.id) %>% 
+  gather(variable,mean,-class.id) %>% 
+  mutate(variable=factor(variable,levels=similiar)) %>% 
+  ggplot(aes(x=class.id,y=mean)) +
+  geom_boxplot()+
+  theme_hc()+
+  scale_colour_hc()+
+  facet_wrap( ~ variable,ncol=5, scales='free_y')
+```
+
+
+As results of EDA, there is something coming up in our mind: <br>
+**Before we build up a classification model, the performance of classification may be not bad, and there is some variables significantly contribute to classify**
+
+<br>
+
+Moves to next part, `Correlation between chemical result and cultivars`
+
+
+
+```{r}
+name <- colnames(wine.data)[-1]
+
+wine.data[,-1] %>% cor %>% as.data.frame %>% 
+  mutate(X1=name) %>% gather(X2,value,-X1) -> cor.dat
+
+cor.dat %>% 
+  mutate(value=round(value %>% as.numeric,2),
+         X1=factor(X1,level=name),
+         X2=factor(X2,level=name)) %>% 
+  ggplot(aes(X2, X1, fill = value)) + 
+  geom_tile() + 
+  geom_text(aes(X2, X1, label = value), color = "#073642", size = 4) +
+  scale_fill_gradient(name=expression("Spearman" * ~ rho), low = "#fdf6e3", high = "steelblue",
+    breaks=seq(0, 1, by = 0.2), limits = c(0.3, 1)) +
+  scale_x_discrete(expand = c(0, 0)) +
+  scale_y_discrete(expand = c(0, 0)) +
+  labs(x = "", y = "") + 
+  guides(fill = guide_colorbar(barwidth = 7, barheight = 1, title.position = "top",
+    title.hjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), 
+        panel.grid.major = element_blank(),
+      panel.border = element_blank(),
+      panel.background = element_blank(),
+      axis.ticks = element_blank(),
+      legend.justification = c(1, 0),
+      legend.position = c(0.9, 0.7),
+      legend.direction = "horizontal") +
+  guides(fill = guide_colorbar(barwidth = 7, barheight = 1, title.position = "top", 
+    title.hjust = 0.5))
+```
+
+```{r}
+bind_rows(
+  wine.data %>% 
+    filter(class.id=='A') %>% select(-class.id) %>% cor %>% 
+    as.data.frame %>% mutate(class.id='A',X1=name),
+  wine.data %>% 
+    filter(class.id=='B') %>% select(-class.id) %>% cor %>% 
+    as.data.frame %>% mutate(class.id='B',X1=name),
+  wine.data %>% 
+    filter(class.id=='C') %>% select(-class.id) %>% cor %>% 
+    as.data.frame %>% mutate(class.id='C',X1=name)) -> cor.dat
+
+cor.dat %>% 
+  gather(X2,value,-c(X1,class.id)) %>%
+  mutate(value=round(value %>% as.numeric,2),
+         X1=factor(X1,level=name),
+         X2=factor(X2,level=name)) %>% 
+  ggplot(aes(X2, X1, fill = value)) + 
+  geom_tile() + 
+  geom_text(aes(X2, X1, label = value), color = "#073642", size = 4) +
+  scale_fill_gradient(name=expression("Spearman" * ~ rho), low = "#fdf6e3", high = "steelblue",
+    breaks=seq(0, 1, by = 0.2), limits = c(0.3, 1)) +
+  scale_x_discrete(expand = c(0, 0)) +
+  scale_y_discrete(expand = c(0, 0)) +
+  labs(x = "", y = "") + 
+  guides(fill = guide_colorbar(barwidth = 7, barheight = 1, title.position = "top",
+    title.hjust = 0.5)) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1), 
+        panel.grid.major = element_blank(),
+      panel.border = element_blank(),
+      panel.background = element_blank(),
+      axis.ticks = element_blank(),
+      legend.justification = c(1, 0),
+      legend.position = c(0.9, 0.7),
+      legend.direction = "horizontal") +
+  guides(fill = guide_colorbar(barwidth = 7, barheight = 1, title.position = "top", 
+    title.hjust = 0.5))+
+  facet_grid(class.id~.)
+```
+
+
+
+## Q1
+
+In order to develop the favorable decision rule to classify cultivar, <br>
+we need to compare the **true error rate** by CV(leave-one-out) between all decision rule.<br>
+
+First, we construct all decision as follows, then we can combine all of results for comparing.
+
+### Tree
+
+The result of tree shows that the tree does not necessarily be prune, since the tree is not complex. <br>
+Moreover, the ture error rate is `14%`.<br>
+In the plot, the recommanded suggestion of cp are between `0.042` and `0.017`, because which all below the horizon line.
+Hence, we choose `0.042` because the size of tree is more simple than `0.017`, and the ture error rate is `15%`.<br>
+
+
+```{r}
+library(rpart)
+wine.control<-rpart.control(minisplit=10,minbucket=3,xval=168) #xval是CV的結果
+wine.tree=rpart(class.id~.,data=wine.data,method="class",control=wine.control)
+printcp(wine.tree)
+wine.tree.prune<-prune.rpart(wine.tree,cp=0.042)
+prp(wine.tree.prune, extra=0, prefix="Cartivar\n")
+printcp(wine.tree.prune)
+temp <- data.frame(classifier='Tree',true.error.rate=0.60119*0.25743)
+```
+
+### LDA
+
+The ture error rate of LDA is `1.7%`
+
+```{r}
+library("MASS")
+wine.ldacv<-lda(class.id~.,data=wine.data,CV=T)
+table(wine.data$class.id,wine.ldacv$class)
+```
+
+### QDA
+
+The ture error rate of LDA is `0.6%`
+
+```{r}
+wine.qda<-qda(class.id~.,data=wine.data,CV=T)
+table(wine.data$class.id,wine.qda$class)
+
+#apparent error rate: 1/168= 0.005952381
+```
+
+### NN
+
+After repeatly performing NN classifier with different `K`, the favorable `K` would be 2 to 4.<br>
+
+```{r}
+library(class)
+knn.result <- NULL
+for(i in 1:20){
+wine.knn<-knn(wine.data[,-1],wine.data[,-1],wine.data[,"class.id"],k=i,prob=T)
+k.acc <- 1-(sum(diag(table(wine.data$class.id,wine.knn)))/
+              sum(table(wine.data$class.id,wine.knn)))
+knn.result <- c(knn.result,k.acc)}
+data.frame(k.choice=c(1:20),ture.error.rate=knn.result)
+```
+
+### SVM
+
+We select parameters(cost, gamma) `both` from `0.1 to 1` in a leave-one-out situation. There are 100 results come out.<br>
+The best parameters set is located at gamma: 0.1, cost:0.4 to 1 which are the same. 
+We can assume that SVM achieve the best performance when gamma=0.1 and cost from 0.4 to 1 .
+
+
+```{r}
+library(e1071)
+i.value <- seq(0,0.05,0.001)
+svm.result <- NULL
+
+svm.result <- expand.grid(c=seq(.1,1,.1),gamma=seq(0.1,1,.1))
+svm.result$acc <- 0
+for(i in 1:100){
+  c1 <- svm(class.id~.,data=wine.data,cost=svm.result[i,1],gamma=svm.result[i,2],cross=168)
+  svm.result$acc[i] <- c1$tot.accuracy
+}
+svm.result %>% arrange(desc(acc)) %>% top_n(5)
+```
+
+### Comparing for all classifiers
+
+Above all, the lowest true error rate are QDA and SVM.
+
+## Q2
+
+### Bagging & Boosting
+
+We use bagging to optimize the prediction by the result of prune tree and reduce the error of sampling from training data.<br> 
+We find out that the Bagging result of prune tree will be different from the original one.<br>
+That is Bagging method improve the prediction ability.<br><br>
+
+As result, the prediction result of bagging is slightly diferent to prediction result without bagging. <br>
+
+
+```{r}
+data.frame(
+  method=c('Bagging','Boosting','Tree','LDA','QDA','NN','SVM'),
+  result=c('BBBBCC','BBBCCA','BBBBBC','BBCBCB','BBBBCB','CBBBCA','ABBBBB'))
+```
+
+
+```{r,eval=F}
+wine.data.test <- read.table('wine_data_test.txt',header= T)
+wine.control<-rpart.control(minisplit=10,minbucket=3,xval=168) 
+wine.bagging<-bagging(class.id~.,data=wine.data,mfinal=20,control=wine.control) 
+# the number of iteration is 20 #
+wine.bagging.pred <- predict.bagging(wine.bagging,wine.data.test)
+#wine.bagging.pred$class
+#round(predict(wine.tree,wine.data.test),0)
+
+
+# lda
+wine.lda <-lda(class.id~.,data=wine.data)
+predict(wine.lda,wine.data.test)$class
+table(wine.data$class.id,wine.ldacv$class)
+# qda
+wine.qda<-qda(class.id~.,data=wine.data)
+predict(wine.qda,wine.data.test)$class
+
+# NN
+wine.knn<-knn(wine.data[,-1],wine.data.test,wine.data[,"class.id"],k=2,prob=T)
+wine.knn
+
+# SVM
+wine.svm <- svm(class.id~.,data=wine.data,cost=0.4,gamma=0.1)
+predict(wine.svm,wine.data.test)
+```
+
+```{r,eval=F}
+###boosting###
+wine.adaboostcv <- boosting.cv(class.id~., data = wine.data, 
+                               v = 168, mfinal = 20, control = wine.control)
+wine.adaboostcv[-1]$confusion
+paste("true error rate = ",wine.adaboostcv[-1]$error)
+wine.adaboost.pred <- predict.boosting(wine.adaboost, wine.data)
+wine.adaboost.pred$confusion
+```
+
+
+
+## Q3 & Q4
+
+### Hierarchical tree method with ward linkage
+
+As result, we can clearly identify that there is `three groups` in wine.data because the banner plot in the below obiviously can be divided to three parts.
+
+```{r}
+library(cluster)
+dis.matrix <- daisy(scale(wine.data[,-1],T,T))
+agn <- agnes(dis.matrix,metric="euclidean",stand=FALSE,method="ward")
+plot(agn,which.plots=2)
+plot(agn,which.plots=1)
+```
+
+In order to examine the result of Hierarchical tree method with ward linkage, <br>
+we can check :
+`Agglomerative Coefficient(AC)` and `whether the resulting groups agrees with original class.id`
+
+- AC as follows indicates that there is strong structure in wine data 
+
+```{r}
+agn$ac
+```
+
+- The resulting groups support original class.id (each position of original class.id is very close)
+
+```{r}
+wine.data[agn$order,1]
+```
+
+- Outlier test
+
+### K-means approach 
+
+At first, we need to choose K group before performing K-means approach.<br>
+Several suggestions have been made as to how to choose the number fo groups.<br><br>
+Based on the most simple way to select K, <br>
+we can use the solution from hierarchical clustering, 3 groups.
+<br><br>
+
+The texts in the plot are the result of k-means.<br>
+As result, few overlapping between three clusters and original class.id point out that the k-means is favorable to this data.
+
+```{r}
+detach("package:dplyr", unload=TRUE)
+library(dplyr)
+km <- kmeans(scale(wine.data[,-1],T,T),3,20)
+pca.wine.data <- princomp(scale(wine.data[,-1],scale=TRUE,center=TRUE),cor=FALSE)
+pcs.wine.data <- predict(pca.wine.data)
+
+pcs.wine.data[,1:2] %>% as.data.frame %>%  
+  bind_cols(data.frame(km.cluster=km$cluster %>% as.factor)) %>% 
+  ggplot(aes(x=Comp.1,y=Comp.2,label=km.cluster,color=km.cluster)) + geom_text() +
+  theme_bw()+
+  guides(color='none')+
+  labs(title='K-means result')
+
+pcs.wine.data[,1:2] %>% as.data.frame %>%  
+  bind_cols( wine.data %>% select(1) ) %>% 
+  ggplot(aes(x=Comp.1,y=Comp.2,label=class.id,color=class.id)) + geom_text() +
+  theme_bw()+
+  guides(color='none')+
+  labs(title='Original class.id')
+```
+
+<br>
+
+In previous section(EDA), because we found some outliers in this data, <br>
+Partitioning Around Medoids, a way which is more robust, is worth to try.<br><br>
+
+Average silouette width = 0.57 indicates that reasonable structure.<br>
+Namely, PAM is not bad but not excellent!
+
+```{r}
+pa <- pam(daisy(wine.data[,-1]),3,diss=T)
+plot(pa,which.plots=1)
+plot(pa,which.plots=2)
+```
+
+### SOM approach
+
+根據SOM的特性，顏色越近代表越相似，從圖可以看出資料可以被切成三個group
+
+```{r}
+library(som)
+library(kohonen)
+n.wine.data<-normalize(wine.data[,-1])
+wine.data.som<-som(n.wine.data,grid = somgrid(10, 10, "hexagonal"))
+plot(wine.data.som, type="dist.neighbours", main = "SOM neighbour distances")
+som.hc <- cutree(hclust(dist(wine.data.som$codes)), 3)
+add.cluster.boundaries(wine.data.som,som.hc)
+cutree(hclust(dist(wine.data.som$codes)), 5)
+```
+

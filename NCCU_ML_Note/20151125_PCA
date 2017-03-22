@@ -1,0 +1,30 @@
+PCA
+
+- Approach
+    - 怎麼選B使得maxB'RB越大？ 
+    - 但又要控制B, 不會因為B越大使得整個越大
+    - 最大的解釋方向為第一個eva所對應的evt
+- Properties of PCs
+    - Correlation X and Y -> Factor loading
+- Connection to SVD of X
+    - 可以不用R去找B
+    - 從SVD的S去找V
+    - V = B !
+- Using Covarainace Matrix
+    若我們不做標準化，單位不同，答案會跟Correlation的結果不同，但沒有一定的正確答案，一般來說都用Correlation
+- Outlier Detection
+    所有有關距離以及variance的方法都會sensitive to outlier
+- Biplots
+    紅色部分的方向為原本變數值較大的那些data
+    - X=U∑V' => X=U∑B' => Y=XB=U∑
+- Interpret the Result 
+    適合做PCA的data:
+    - 有點關係但又不能共線：
+        高度共線通常為 r^2 >= 0.95, 因為高度共線了話兩個變數用一個變數表示就好了 -> 剔除高度共線的變數
+- Some Remarks
+    PCA可以做非linear Combination
+- Large Sample Properties of PCs
+    correlation matrix非常大 -> eigendecomposition
+    - 解法：
+    老師建議用Sampling去估計 並且建立信賴區間
+- 

@@ -1,0 +1,31 @@
+
+
+Observations: 41 US cities
+
+Variables: 
+
+PT: Particulates content of air ( in 10^(-6) grams per cubic meter )
+CO: Carbon monoxide content of air (in ppm)
+SO2: Sulfur dioxide content of air (in ppb)  
+PSI: Air pollution index, PSI=0 means "good", PSI=1 means "moderate", PSI=2 means "Unhealthy".
+Temp: Average annual temperature in degrees Fahrenheit 
+Man: Number of manufacturing enterprises employing 20 or more workers 
+Pop: Population size in thousands from the 1970 census 
+Rain: Average annual precipitation in inches 
+
+----
+
+The Wages Data Set contains information regarding wages and other characteristics from a random sample of 534 persons. The variables are described next: 
+
+   1) EDUCATION LEVEL: 1=very low, 2=low, 3=medium, 4=high 
+   2) SOUTH: 1=person lives in the south, 0=otherwise 
+   3) GENDER: 1=female, 0=male 
+   4) EXPERIENCE: 1=low, 2=medium, 3=high 
+   5) UNION: 1=union member, 0=otherwise 
+   6) WAGE: wage in $/hr 
+   7) AGE: 1=less than 33 years old, 2=between 33 and 48 years old, 3=older than 48 
+   8) RACE: 1=other, 2=hispanic, 3=caucasian 
+   9) OCCUPATION: 1=management, 2=sales, 3=clerical, 4=service, 5=professional, 
+                  6=other
+ 10) SECTOR: 0=other, 1=manufacturing, 2=construction 
+ 11) MSTAT: 1=married, 0=otherwise 

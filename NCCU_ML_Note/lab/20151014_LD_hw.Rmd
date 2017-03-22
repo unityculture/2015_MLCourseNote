@@ -1,0 +1,72 @@
+---
+title: "Cross Validation for Logistic Discrimination"
+author: "林敬昇、陳昱霈、楊崇甫"
+date: "2015年10月15日"
+output: html_document
+---
+
+# Cross Validation by package glmnet
+
+### Loading glmnet package
+
+```{r}
+library(glmnet)
+```
+
+### Loading dataset : newfish
+
+載入資料集
+
+```{r}
+fish <- read.table('/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/fish.txt',header=T)
+L21<-fish$L2-fish$L1
+L32<-fish$L3-fish$L2
+L31<-fish$L3-fish$L1
+newfish<-cbind(fish,L21,L32,L31)
+```
+
+檢視資料集
+
+```{r}
+str(newfish)
+```
+
+資料整理
+
+```{r}
+x <- as.matrix(newfish[,-1])
+y <- newfish$Species
+```
+
+
+### Cross Validation
+
+利用cv.glmnet執行CV. 
+
+其中參數設定可以透過`?cv.glmnet`查詢
+
+列出幾項重要參數：
+
+- lambda : 不確定是不是上課老師說的alpha
+- nfolds : nfolds can be as large as the sample size `(leave-one-out CV)`
+- type.measure : type.measure="class" applies to binomial and multinomial logistic regression only, and gives misclassification error.
+
+參考`?cv.glmnet`標頭`Value`中的Objects, 包含：
+
+- lambda : the values of lambda used in the fits.
+- `cvm` : The mean cross-validated error - a vector of length length(lambda).
+- `cvsd` : estimate of standard error of cvm.
+- cvup : upper curve = cvm+cvsd.
+- cvlo :	lower curve = cvm-cvsd.
+
+```{r,warning=F}
+cvfit = cv.glmnet(x, y,family='multinomial',
+                  nfolds=148, 
+                  type.measure='class',
+                  parallel = TRUE)
+plot(cvfit)
+length(cvfit$cvm)
+predict.value <- predict(cvfit, x, s = "lambda.min", type = "class")
+table(predict.value,newfish$Species)
+```
+

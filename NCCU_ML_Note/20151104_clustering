@@ -1,0 +1,86 @@
+Clustering
+
+- Some issues 
+    - Homogeneity vs Separation : 類似組內變異組間變異
+
+- Data and Dissimiliarity Matrix
+    - 連續與不連續的變數
+    - 通常Mixture會把連續的轉成不連續
+
+- Clustering Methods (較不正式的方法)
+    - PCA投影過後的data常常可以找到不錯的分群結果
+    - MDS做的蠻好的
+    - MCA用在全部都是處理類別型變數的相似度
+
+- Formal Approaches
+    - Partition : 
+    - Tree : 相似的會在樹的同一支上
+
+- Specific Algorithm
+    - Sorting : 古老不太使用的方法
+    - Switching : 透過交換的方式去找最佳解 ex: K-means
+    - joining : Tree常用
+    - Spliting : 與Joining相反
+
+- Agg Hierarchical 
+    - Length 為 距離的意思
+    - 群的距離該怎麼算呢？
+    - 分成幾群之有參考答案 沒有標準答案
+    - 兩個object交會的地方越高，代表這兩個距離很遠
+
+- Linkages for joining methods
+定義群與群之間的距離定義
+    - Single Linkage : 兩個group中所有資料的最小距離
+    - Wald's method : 找出兩個group合併後的中心距離最小 -> within-variation
+
+- Remark
+    - Single Linkage : 只要有一個很近就會被你併進去 -> 容易分成鬆長形
+    - Complete : 容易分成密集型
+    - Wald : 容易分成密集型
+    - 單調型 Transformation 對 Single and Complete 結果不會變
+      但對於Wald會改變
+
+- Agglomerative nesting
+    - AC : 
+    - 第一次跟其他人merge的高度為多少 -> d(i)
+      在跟總長度(Height)做比較 -> m(i) 越小越好
+      AC = average of 1 - m(i) -> 越大越好
+    - AC >= 0.7 超猛
+    - 0.51 <= AC <= 0.7 合理的
+
+- Rule of Thumb for AC
+    - 不能隨便拿兩組資料（不同n）來比AC
+    - 因為 N 較大 AC 也會跟著上升
+
+- Monothetic Analysis
+    - For Binary data
+
+- Division Analysis
+    - 想法： 全部併一群 -> 誰h比較不一樣就丟出去 -> h自己變一群 ->
+            剩下的資料算有誰到剩下的資料的距離>與h的距離 -> 丟到h那群
+    - DC : 分到最後, 兩兩object分開時的距離 -> 分子
+           所有資料中兩兩的距離最大值 -> 分母
+           di -> 越小越好
+
+- Some Remarks
+    - sensitive to outlier
+
+- Optimization Methods
+假設我們想切三群，我們會希望W小、B大
+    - minimize trace(w) -> 變數自己的變異 -> 看成組內變異
+    - minimize det(w) 
+    - maximize sum of the eigv of W^-1*B
+    - example of k-means : 切 -> 新的中心點 -> 
+- Virtues of k-means
+    - sensitive to outlier
+- Partitioning aroud mediods
+    - a(i) :i-object 到自己群中所有資料平均中心距離
+    - b(i) :i-object 到最接近的cluster距離
+- Model Based Approach
+    - 假定normal and common cov
+    - 作法：給定alpha為group_label，算分到某群的likelihood....
+- SOM
+    - 想法：將相似的資料放到右方的格子中或是附近的格子中，最後再做一個整合，告訴哪些是一個cluster
+    - node的個數要比分群的個數還多、但比資料數少
+    - 每一個node會有自己的權重用來判斷資料要判到此node中
+    - 作法：給予各個node的權重起始值 -> 用x跟權重值算距離 -> 最近的node叫BMU -> 將此筆資料丟進去BMU 並且更新此node的權重直跟資料很像、也更新附近的node的權重 -> 資料越丟越多時，更新的範圍也要越來越小

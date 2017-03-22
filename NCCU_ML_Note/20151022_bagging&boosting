@@ -1,0 +1,54 @@
+- Ensemble Methods: Bagging and Boosting
+    
+    Bagging：創造很多Training data
+             可以用來消除Training data 的抽樣誤差
+    Boosting：一個Trainging data加了權重
+
+    - Bootstrap Aggregating (Bagging)
+
+    適用在決定model了之後，針對這個model在去改善！
+
+    - Idea of Bootstrap Sampling
+
+    用一組Sample data
+    當不能用CLT, 非in,.... 可以用來推估很多東西
+    ex : Mean , Variance, C.I. ....
+
+    - Cases where bootstrap does not apply
+
+        - Sample data的樣本代表性不足時
+        ex : 母體大但只取small data -> 危險
+        
+        - Dirty data
+        ex: outlier
+        
+        - Dependence structure
+        ex: Data中若是dependence stucture時 -> block bootstrap
+
+    - Idea of Bagging
+
+    產生l的Training data (decision rule/classifier)
+    最後再用這l個去平均的感覺（投票）
+
+    - Why does Bagging work
+
+    noise : 原本資料就有問題
+    bias : dicision rule不好
+    Variance : 抽樣誤差的問題
+
+    - Idea of Boosting
+
+    只有一個training data, 
+    從一個Weak Learner開始（可以選一個分類器 ex: tree）
+    先給observation同一個權重開始(stage1), 
+    decision rule切下去之後在根據結果調整權中,
+    找出重要的observation(靠近boundary)
+    給予權重, 慢慢修正改善這個權重
+    最後得的C_final會由過去所有的C和C的權重做加總
+
+    Note: 權重有分觀測直的與Ct的
+
+    - AdaBoosting
+
+    (4)犯錯的點卻權重調大？
+    -> 在boundary的點容易犯錯, 要把它視為重要的

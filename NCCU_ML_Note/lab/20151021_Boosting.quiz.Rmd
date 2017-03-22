@@ -1,0 +1,80 @@
+---
+title: "20151021_Boosting.quiz"
+date: "2015年10月21日"
+output: 
+  html_document:
+  theme: co
+---
+
+
+## Question 
+
+這週上課有提到在做`Boosting`時, predict結果會不一樣<br>
+進一步去看是哪一個環節影響而導致。
+
+- [參考](http://www.jstatsoft.org/article/view/v054i02/adabag_An_R_Package_for_Classification_with_Boosting_and_Bagging.pdf)
+
+看到參考中
+> 3.1. The boosting, predict.boosting and boosting.cv functions
+
+有提到`boos`這個參數有做`bootstrap sampling`
+
+因此嘗試修改一下程式碼。
+
+```{r,echo=F,warning=FALSE,message=F}
+fish<-read.table("/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/20151014_fish.txt",h=T)
+L21<-fish$L2-fish$L1
+L32<-fish$L3-fish$L2
+L31<-fish$L3-fish$L1
+newfish<-cbind(fish,L21,L32,L31)
+library(adabag)
+library(rpart)
+```
+
+因為執行時間的關係, 只考慮做10-fold, m=5
+
+## boosting.cv with boos=T
+
+當`boos=T`時, 兩次執行結果確實不相同。
+
+```{r}
+fish.control<-rpart.control(minisplit=10,minbucket=3,cp=0.01) 
+
+newfish.adaboostcv<-boosting.cv(Species~.,boos=T,
+                                data=newfish,v=4,mfinal=5,
+                                control=fish.control)
+newfish.adaboostcv[-1]
+
+newfish.adaboostcv<-boosting.cv(Species~.,boos=T,
+                                data=newfish,v=4,mfinal=5,
+                                control=fish.control)
+newfish.adaboostcv[-1]
+
+```
+
+
+## boosting.cv with boos=F
+
+當`boos=F`時, 兩次執行結果相同了。
+
+```{r}
+fish.control<-rpart.control(minisplit=10,minbucket=3,cp=0.01) 
+
+newfish.adaboostcv<-boosting.cv(Species~.,boos=F,
+                                data=newfish,v=4,mfinal=5,
+                                control=fish.control)
+newfish.adaboostcv[-1]
+
+newfish.adaboostcv<-boosting.cv(Species~.,boos=F,
+                                data=newfish,v=4,mfinal=5,
+                                control=fish.control)
+newfish.adaboostcv[-1]
+
+```
+
+## Conclusion
+
+應該是`adabag`這個套件的Boosting有考慮Bagging的想法<br>
+(或是單純加入Bootstrap sampling)<br>
+因為Bootstrap sampling的關係, 結果才會不同！
+

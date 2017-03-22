@@ -1,0 +1,47 @@
+- SVM與之前的作法差異
+    在原來的空間沒有辦法用線性hyperplane切開, 
+    他就將原先的空間做更高維度的轉換, 直到找到hyperplane切開他們
+    - feature space : 原先變數的轉換
+    - bounding planes : 最靠近+1,-1的線
+    -> 找到 w'x+b=0 使得到兩側的bounding planes距離最遠
+
+- Solving the Optimization Problem
+    - Lagrange Multiplier Method:
+        當目標函數要求極值,但有限制式時,可以用此方法
+    - Duel Problem:
+        變成最佳化這個問題
+
+- Linearly Non-seperable Examples
+    當不能linearly hyperplane時, 要調整一下條件, 可以容忍誤差
+    
+    - slack variable:
+    把penalty加進來才可以調整, 允許容忍錯誤的最佳化問題
+    
+    - The Optimization Problem:
+        - 前項為讓margin大
+        - 後項為讓誤差小
+    
+    - Nonlinear SVM: Mapping data into a higher dimensional space
+    不管資料維度有幾維, 都可以 Mapping 至無窮維度
+    
+    - The New Duel Problem 
+    注意其中有內積的那一項, 我們不需要知道我們怎麼mapping的
+    只需要知道kernal function
+
+    - Illustration of RBF Kernel
+    一個範例讓我們知道,只要知道kernal function就可以知道mapping的方法
+    mapping到無窮 -> 不好說 -> 因此我們只要知道kernal function即可
+    也是相對簡單的方法, 對於新手, 因為只要選r
+        
+        - Grid Search for Optimal (C , r)
+        1. 通常gamma越大分越好（因為模型會比較複雜）
+        2. 二維度的搜尋 -> contour plot -> 好搜尋
+
+        - The Decision Function (SVM Classifier)
+        1. training data -> kernal function -> dot product
+           -> ... -> 看正還是負 
+        2. alpha=0代表不重要的點 , alpha>0 -> support vector！重要
+        
+    - The Multi-class Problems
+    1. One to One : 利用Ck取2的方式去做, 最後再看這些次中投票的結果誰是最高票
+    2. One to all : ex : 取1與非1的.. 類似k-fold

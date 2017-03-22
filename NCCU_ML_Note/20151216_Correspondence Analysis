@@ -1,0 +1,21 @@
+Correspondence Analysis
+
+- 沒有前提假設
+- E(i,j)＝若兩個變數為ind的期望出現次數
+- F(i,j)＝若兩個變數為實際的次數
+- 目的：
+    - 在低維度的空間，利用距離找出相關，越進越相關
+- 距離的測量：
+    - The X^2 Distance
+- Re-Scalling 
+    - row space 
+- Numerical Result
+    - 要注意兩部分, 第一個為dimension所解釋的比例
+    - 第二個為第一個dimension中 X1 Y1 的相關性（不一定是直線）
+
+- MCA
+    - 變數很多個，類別也很多個
+    - 三個變數要創造三個矩陣來描述data -> 但看不到frequency
+    - 將矩陣轉至後相乘 -> 看的到frequency 
+    - 通常解釋能力會需要比較多component
+    - 

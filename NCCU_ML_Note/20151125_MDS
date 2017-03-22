@@ -1,0 +1,38 @@
+MDS
+
+- Define Dissimilarity
+混和型資料會將 連續型 轉成 類別型在算相似度
+    - Matching coefficient
+    類別型，兩筆資料相不相似, 一樣就+1
+    - Ordinal data
+    用rank當做連續型去算距離
+    - Mixtures
+    類別型跟Matching一樣算法
+    連續型算法會介於0與1之間
+
+- Covert Similarity to Dissimilarity
+內積越大(夾角越小)代表越相似
+n
+- Metric Scaling
+    - 目的：在低維度展示資料
+在投影時必須保有原來data之間的距離(近的還是近、遠的還是遠)
+
+- Evaluation of D
+在低維度怎麼放資料才會跟原本data之間相似度很像
+
+- Notes on the STRESS Function
+尚未標準化、轉換的data
+定義不同的STRESS function (loss function)
+    - Normalized STRESS
+    - Sammon Mapping1
+    - Least Squares
+    - STRAIN (classical mds) : 最重要
+        簡單來說，透過轉換(double-centering)就可以利用內積(相似度)來算loss function
+        好處：
+        1. minimizing loss function的解救可以從X-delta的eigen-decomposition直接取得
+        2. closed form
+
+- Non-metric
+時機：當三角不等式不成立時
+    例如：
+利用Isotonic Regressio的方式去找最好的投影方式(其中一種投影方式其滿足STRESS最小)

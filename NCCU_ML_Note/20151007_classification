@@ -1,0 +1,148 @@
+
+- Part I. An Overview
+
+    - Handwritten Letter and Digit Recognition
+
+    切成320變數，記錄0~256個數字
+
+    - Task and Algorithm
+
+    supervised learning problems = classification / discriminant analys.
+
+    - Basic Statistical Decision Theory
+
+    Pk(x) : x 向量被分到k的可能性
+    D: 無法判斷的
+    O: 不屬於這些分類
+    所以分類的可能性為K+2
+
+    - Bayes Rules for Known Distributions
+
+    希望建立出classifier/decision rule
+    可以告訴我們判斷出哪一個字
+
+    判斷分類的標準：
+    1. misclassification probabilities. 
+    2. doubt probabilities 
+
+    - Criteria of the Classifier
+
+    希望以下兩個都越小越好
+    Misclassification probs. = P( c(x)≠k | C = k )
+    Doubt Probs = Pd(k) = P(c(X)=D | C=k)
+
+     - Loss Function (of decisions)
+
+     l：為決策結果
+     qually loss: 只要犯錯給予的懲罰都是一樣的
+     fasle positive: 正向犯錯 , ex : 沒病告訴有病
+     false negative: 負向犯錯 , ex : 有病告訴沒病
+
+     - Risk Function
+
+     目標為最小total risk
+     Risk function : loss 取 expectation (某k)
+     total risk : 在對 Risk function 取 expectation (對k取)
+
+     - The Best Decision Rule
+
+     posterior probability of class k given :
+        分母： P(C=k, X=x) = P(X=x | C=k) * P(C=k)
+
+     propostition : 
+        一個X可以對應k個機率，我們挑出最大的那一個k 且 機率直要大於1-d
+        否則判為D
+        (1-d 為total Risk prove)
+
+    - Classification in Practice
+
+    pix and pk(X) 在現實未知
+
+    estimate to Pk(X) is more hard :
+    1. parametric method: 若畫完圖發現很像常態分配...
+    2. Non-parametric: 不假設分配，看資料怎麼走就可以給曲線
+
+    - Non-parametric Methods for Density Estimation
+
+    Kernal function : 在X高維度若沒什麼資料不太建議用
+         2h = 底 , P(x) = 高
+         P(x) estimation = .... = ..
+         其中權重問題: 離x越近的xi權重是否要一樣？
+            -> 產生kernal function -> 只要滿足積分為1即可
+         Bandwidth: 
+            取越大 -> 幾乎是一直線
+            取越小 -> locally
+
+    - CV 
+
+    1. 一次去除5%～10%資料建模 -> 不斷重複
+    2. leave-one-out -> 一次去除一筆觀測直去建模
+
+
+- Part II. Specific Methods of Classification
+
+    - LDA
+
+    將高維度的空間用線性投影,找到一個投影方式區分Data
+
+    - Algorithm of LDA
+
+    自己群都很密集, 不同群分很開
+    -> a'Ba = B投影到那條線上的量
+    -> a'Wa = W投影到那條線上的量
+    -> 兩者相除要越大越好
+
+    可能性為 min(組數-1,X維度)
+
+    - Classifying New Objects
+
+    新的資料在投影過後的空間中離k個組中心最近 -> 判給那組
+
+    - QDA
+
+    即為k=2 and ∑1=∑2 => fisher's LDA
+
+    假設k個變數都是常態分配 -> 不好判斷，不強求
+
+    - KNN
+
+    1. 先決定附近(r), 在看附近哪一類比較多
+
+    2. 決定r的方法可以利用 CV 去計算 true error rate, 選ture error rate 最小的r
+
+    3. 若是ni/r = nj/r 平手, 隨機塞一個k
+
+    - Logist Regression
+
+    assumption : normal and common covariance  
+
+    越不 flexible 越容易受到奇怪的東西影響
+
+    * 注意共線性會影響 LDA QDA LR
+
+    * outlier會影響 LR Tree
+
+    - Classification Tree
+
+    理論上一定可以達到100%答對率，但model一定很複雜
+    而且預測會做不好，所以我們需要prune the tree
+
+    1. 作法：
+
+    先一刀下去 -> 計算P(k|v)=Pk where v is node on tree -> mle = nvk/nv
+
+    完美的模型 : nvk/nv=1 (only one class)
+
+    所以我們要找到那一刀使得nvk/nv接近1 -> Deviance 
+
+    Dv - (Dv1 + Dv2) -> 找最大, 切完v之後在切成v1 v2 -> 
+    若切完這一刀後Dv1 Dv2變很小（代表這一刀切完之後跟perfect model越近） -> 所以才要找最大
+
+    2. prune the tree
+
+    因為希望樹簡單一點也要同時保有準度
+
+    Cost = Misclassification + a*Size , M大S小 M小S大 -> 要找到平衡點
+        其中a是代表Size的重視度
+
+    那a要怎麼選擇呢？ -> 利用CV選最小的true error rate !

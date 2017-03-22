@@ -1,0 +1,20 @@
+1. Relevant Information:
+
+   -- These data are the results of a chemical analysis of
+      wines grown in the same region in Italy but derived from three
+      different cultivars.
+      The analysis determined the quantities of 13 constituents
+      found in each of the three types of wines.
+
+2. Number of Instances: 178 
+
+        class 1: 59
+        class 2: 71
+        class 3: 48
+
+3. Number of Attributes: 13 numeric, predictive attributes
+
+4. Column Information:
+
+        Column 1 represents the class
+        Columns 2-14 are measurements of the 13 constituent chemicals

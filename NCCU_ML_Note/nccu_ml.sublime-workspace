@@ -1,0 +1,768 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"my",
+				"my_list2"
+			],
+			[
+				"my_l",
+				"my_list2"
+			],
+			[
+				"my_",
+				"my_list"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "lab/20151028_SVM.Rmd",
+			"settings":
+			{
+				"buffer_size": 1173,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "library(data.table)\nlibrary(dplyr)\nlibrary(e1071)\nlibrary(tidyr)\napp.rank <- fread('/home/ubuntu/sheng/20160325_App_gender_model/20160322_app.rank.csv')\napp.uid <- fread('/home/ubuntu/sheng/20160325_App_gender_model/20160324_model_dataset.csv')\napp.uid %>% \n  group_by(gender) %>% \n  summarise_each(funs(sum),-c(uid,gender)) %>% \n  gather('app','count',-gender) %>% \n  spread(gender,count) %>% \n  mutate(f.cond.p = female/(female+male),\n         m.cond.p = male/(female+male),\n         Install.total=female+male,\n         abs.diff = (f.cond.p - m.cond.p) %>% abs,\n         n.x.abs.diff = Install.total*abs.diff) %>%\n  distinct(Install.total,abs.diff) %>% \n  arrange(desc(n.x.abs.diff))  -> var.select\nvar.select$app <- var.select$app %>% as.character()\napp.uid.model <- app.uid %>% \n  sample_frac(0.1) %>% \n  mutate(gender.new = gender %>% as.factor() ) %>% \n  select(one_of(var.select$app[1:100]),gender.new,-gogolook.callgogolook2)\n## set : c and gamma\nset <- expand.grid(c=seq(1,1001,100),gamma=seq(1,10001,1000))\nset$acc = 0\nfor(i in 1:121){\n  svm.result <- svm(gender.new ~ ., data = app.uid.model,\n             cost=set[i,1],gamma=set[i,2],cross=2)\n  set$acc[i] <- svm.result$tot.accuracy\n  print(i)\n  }\nsummary(svm.result)\npred <- predict(svm.result,data = app.uid.model %>% select(-gender.new))\nacc.table <- table(pred,app.uid.model$gender.new)\n(acc.table[2]+acc.table[3])/sum(acc.table)",
+			"settings":
+			{
+				"buffer_size": 1395,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "20151028_SVM",
+			"settings":
+			{
+				"buffer_size": 1371,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "Searching 45 files for \"glmnet\"\n\n/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/20151014_LD_hw.Rmd:\n    6  ---\n    7  \n    8: # Cross Validation by package glmnet\n    9  \n   10: ### Loading glmnet package\n   11  \n   12  ```{r}\n   13: library(glmnet)\n   14  ```\n   15  \n   ..\n   42  ### Cross Validation\n   43  \n   44: 利用cv.glmnet執行CV. \n   45  \n   46: 其中參數設定可以透過`?cv.glmnet`查詢\n   47  \n   48  列出幾項重要參數：\n   ..\n   52  - type.measure : type.measure=\"class\" applies to binomial and multinomial logistic regression only, and gives misclassification error.\n   53  \n   54: 參考`?cv.glmnet`標頭`Value`中的Objects, 包含：\n   55  \n   56  - lambda : the values of lambda used in the fits.\n   ..\n   61  \n   62  ```{r,warning=F}\n   63: cvfit = cv.glmnet(x, y,family='multinomial',\n   64                    nfolds=148, \n   65                    type.measure='class',\n\n7 matches in 1 file\n",
+			"settings":
+			{
+				"buffer_size": 864,
+				"line_ending": "Unix",
+				"name": "Find Results",
+				"scratch": true
+			}
+		},
+		{
+			"file": "lab/20151014_LD_hw.Rmd",
+			"settings":
+			{
+				"buffer_size": 1462,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "lab/20151014_lda_qda_lr.R",
+			"settings":
+			{
+				"buffer_size": 3285,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "## LD\ntrain <- sample(1:59095,59095*0.5)\napp.uid %>%  \n  filter(train) %>% \n  mutate(gender.new = gender %>% as.factor() ) %>% \n  select(one_of(var.select$app[1:100]),gender.new,-gogolook.callgogolook2) -> train.data\napp.uid %>%  \n  filter(-train) %>% \n  mutate(gender.new = gender %>% as.factor() ) %>% \n  select(one_of(var.select$app[1:100]),gender.new,-gogolook.callgogolook2) -> test.data\n\n\nld <-multinom(gender.new~.,data=train.data,maxit=250)\nld\ntable(test.data$gender.new,predict(ld,test.data))\npredict(newfish.logd,newfish.test)\n\n\nsvm <- svm(gender.new~.,data=train.data)\ntable(test.data$gender.new,predict(svm,test.data))\n\napp.uid %>%  \n  mutate(gender.new = gender %>% as.factor()) %>% \n  select(one_of(var.select$app[1:100]),gender.new,-gogolook.callgogolook2) -> lda.data\n\nlda <- lda(gender.new~. , data = lda.data, CV=T)\ntable(lda.data$gender.new,lda$class)",
+			"settings":
+			{
+				"buffer_size": 870,
+				"line_ending": "Unix",
+				"name": "## LD"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+		[
+			[
+				[
+					"Packages/Python/Python.sublime-build",
+					""
+				],
+				[
+					"Packages/Python/Python.sublime-build",
+					"Syntax Check"
+				]
+			],
+			[
+				"Packages/Python/Python.sublime-build",
+				""
+			]
+		]
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 87.0,
+		"last_filter": "install",
+		"selected_items":
+		[
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"pack",
+				"Package Control: Install Package"
+			],
+			[
+				"",
+				"Package Control: Enable Package"
+			],
+			[
+				"ins",
+				"Package Control: Install Package"
+			],
+			[
+				"rename",
+				"File: Rename"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Install Package"
+			],
+			[
+				"list pa",
+				"Package Control: List Packages"
+			],
+			[
+				"insall",
+				"Package Control: Install Package"
+			],
+			[
+				"enab",
+				"Package Control: Enable Package"
+			],
+			[
+				"instal",
+				"Package Control: Install Package"
+			],
+			[
+				"list",
+				"Package Control: List Packages"
+			],
+			[
+				"install ",
+				"Package Control: Install Package"
+			],
+			[
+				"list pack",
+				"Package Control: List Packages"
+			],
+			[
+				"packag in",
+				"Package Control: Install Package"
+			],
+			[
+				"	",
+				"Package Control: Install Package"
+			],
+			[
+				"install pa",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: install ",
+				"Package Control: Install Package"
+			],
+			[
+				"Package Control: install",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 539.0
+	},
+	"console":
+	{
+		"height": 126.0,
+		"history":
+		[
+			"view.run_command(\"IncrementCommand\")",
+			"IncrementCommand()",
+			"IncrementCommand（）",
+			"IncrementCommand()",
+			"IncrementCommand(",
+			"IncrementCommand",
+			"view.run_command(\"example\")",
+			"import urllib.request,os; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); open(os.path.join(ipp, pf), 'wb').write(urllib.request.urlopen( 'http://sublime.wbond.net/' + pf.replace(' ','%20')).read())",
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)",
+			"1",
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)",
+			"import urllib.request,os,hashlib; h = 'eb2297e1a458f27d836c04bb0cbaf282' + 'd0e7a3098092775ccb37ca9d6b2e4b7d'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note"
+	],
+	"file_history":
+	[
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151230_ICA",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/YueTeam/20160114_chapter7",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/Side Bar.sublime-settings",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/Side Bar Folders.sublime-settings",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/SideBarEnhancements/Default (OSX).sublime-keymap",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151125_MDS",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/20151203_Multidimensional Scaling (MDS).r",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/YueTeam/20151214_chapter6",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/Final_exam/data_Intro",
+		"/Users/sheng/Desktop/header.tex",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/Final_exam/AirPollution.txt",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/Final_exam/MixedDialogs.txt",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/Final_exam/citycrime.txt",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/citycrime.txt",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/20151216_Simple Correspondence Analysis (CA).r",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/Mammals.txt",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/fisher.txt",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/20151125_PCA",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151216_Correspondence Analysis",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/nccu_ml.sublime-project",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151125_PCA",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/Midterm/wine_data_intro.txt",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151104_clustering",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/Midterm/wine_data_test.txt",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/Midterm/wine_data",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/olive.txt",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151028_SVM",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151022_bagging&boosting",
+		"/Users/sheng/Desktop/test",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/20151014_lda_qda_lr.R",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151007_classification",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151007_ML_note",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/new data",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/new fish",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/fish",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/NCCU_MLNote.sublime-project",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/sheng/Documents/Learning/py/20151007_ML_note",
+		"/Users/sheng/Desktop/English/60s/Topic - Cheap Goods From China Have High Carbon Co",
+		"/Users/sheng/Documents/Learning/py/learning1.py",
+		"/Users/sheng/Documents/Learning/SQL/basic.sql",
+		"/Users/sheng/Documents/Learning/SQL/FunctionDefined_INSTR.sql",
+		"/Users/sheng/Documents/Learning/SQL/untitled.sql",
+		"/Users/sheng/Documents/Learning/SQL/untitled",
+		"/Users/sheng/Documents/Learning/py/basic.sql",
+		"/Users/sheng/Documents/Learning/py/learning2.py",
+		"/Users/sheng/Desktop/2.py",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/SideBarEnhancements/Side Bar.sublime-settings",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/Anaconda.sublime-settings",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/Anaconda/Anaconda.sublime-settings",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/Anaconda/Default (OSX).sublime-keymap",
+		"/Users/sheng/Desktop/untitled.R",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/R-Box/R-Box.sublime-settings",
+		"/Users/sheng/GitBook/Library/unityculture/statistical_ml/book.json",
+		"/Users/sheng/Desktop/a",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/Terminal/Default (OSX).sublime-keymap",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/Terminal.sublime-settings",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/Terminal/Terminal.sublime-settings",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/ConvertToUTF8.sublime-settings",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/ConvertToUTF8/ConvertToUTF8.sublime-settings",
+		"/Users/sheng/Documents/Whoscall/20150807_FET_project/geocode.sh"
+	],
+	"find":
+	{
+		"height": 25.0
+	},
+	"find_in_files":
+	{
+		"height": 93.0,
+		"where_history":
+		[
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"glmnet",
+			"新主健保資料庫ID_2.dbo",
+			"2002",
+			" ",
+			"     ",
+			"         \n",
+			"D",
+			"x",
+			"print",
+			"len",
+			"print",
+			"\"\"\"\n\nx = 3\nprint  x   \nx += 2\nprint x\nx -= 1\nprint x\n\nx,y=99,3    \n",
+			"222",
+			"]\n",
+			"python",
+			"pyhton",
+			"command",
+			"ㄇ"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"ID_2005百萬抽樣檔.dbo",
+			"2012",
+			"2011",
+			"2010",
+			"2009",
+			"2008",
+			"2007",
+			"2006",
+			"2005",
+			"2004",
+			"2003"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 4,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "lab/20151028_SVM.Rmd",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1173,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								661,
+								661
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 0,
+								"count": 37,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"origin_encoding": "UTF-8",
+							"r_box_status": false,
+							"side_bar_folders_auto_load_folder": 1,
+							"syntax": "Packages/R-Box/syntax/R Markdown.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1395,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								563,
+								563
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 0,
+								"count": 12,
+								"modified": true,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"default_dir": "/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note",
+							"r_box_status": false,
+							"syntax": "Packages/R/R.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 32.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "20151028_SVM",
+					"semi_transient": true,
+					"settings":
+					{
+						"buffer_size": 1371,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								335,
+								335
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 0,
+								"count": 118,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"origin_encoding": "UTF-8",
+							"side_bar_folders_auto_load_folder": 1,
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 864,
+						"regions":
+						{
+							"match":
+							{
+								"flags": 112,
+								"regions":
+								[
+									[
+										157,
+										163
+									],
+									[
+										191,
+										197
+									],
+									[
+										243,
+										249
+									],
+									[
+										324,
+										330
+									],
+									[
+										367,
+										373
+									],
+									[
+										572,
+										578
+									],
+									[
+										724,
+										730
+									]
+								],
+								"scope": ""
+							}
+						},
+						"selection":
+						[
+							[
+								63,
+								63
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 3,
+								"count": 48,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"default_dir": "/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note",
+							"detect_indentation": false,
+							"line_numbers": false,
+							"output_tag": 1,
+							"result_base_dir": "",
+							"result_file_regex": "^([^ 	].*):$",
+							"result_line_regex": "^ +([0-9]+):",
+							"scroll_past_end": true,
+							"syntax": "Packages/Default/Find Results.hidden-tmLanguage",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "lab/20151014_LD_hw.Rmd",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1462,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1033,
+								1033
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 0,
+								"count": 105,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"origin_encoding": "UTF-8",
+							"r_box_status": false,
+							"side_bar_folders_auto_load_folder": 1,
+							"syntax": "Packages/R-Box/syntax/R Markdown.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 664.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "lab/20151014_lda_qda_lr.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3285,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								508,
+								508
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 0,
+								"count": 65,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"origin_encoding": "UTF-8",
+							"r_box_status": false,
+							"side_bar_folders_auto_load_folder": 1,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 870,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								834,
+								834
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 515,
+								"count": 12,
+								"modified": true,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"auto_name": "## LD",
+							"default_dir": "/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 25.0
+	},
+	"input":
+	{
+		"height": 31.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 24.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"output.markdown":
+	{
+		"height": 100.0
+	},
+	"pinned_build_system": "Packages/Python/Python.sublime-build",
+	"project": "nccu_ml.sublime-project",
+	"replace":
+	{
+		"height": 46.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"",
+				"~/Documents/NCCU/Bayesian/Bayesian.sublime-project"
+			]
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 208.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

@@ -1,0 +1,215 @@
+---
+title: "ML Final"
+author: "Shenglin"
+date: "2016年1月10日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+options('scipen'=100,'digits'=4)
+knitr::opts_chunk$set(comment="",prompt=T,strip.white=F,warning=FALSE,message=F,echo=F)
+```
+
+```{r}
+library(stats)
+library(MASS)
+library(data.table)
+library(dplyr)
+library(tidyr)
+library(gdata)
+library(stringr)
+library(DT)
+library(ggthemes)
+library(ggplot2)
+library(rgeos)
+library(maptools)
+library(ineq)
+library(plotly)
+library(xts)
+library(lubridate)
+library(dygraphs)
+library(gridExtra)
+library(googlesheets)
+library(GGally)
+```
+
+```{r}
+q1data <- read.table('/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/Final_exam/AirPollution.txt')
+wage <- read.table('/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/Final_exam/wage.txt',
+                   header=T,colClasses = 'factor')
+
+mix <- read.table('/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/Final_exam/MixedDialogs.txt',header=T)
+#ggpairs(q1data, diag = list("continuous"="blank"))
+```
+
+# Q1
+  
+從Corelation Matrix中可以發現到：
+
+- PSI 與 PT、CO、SO2(空氣中的有害物質)有一定程度的正相關
+    - PSI vs PT  (0.913)
+    - PSI vs CO  (0.431)
+    - PSI vs SO2 (0.826)
+
+- PSI 與工業化程度亦有一定程度的正相關
+    - PSI VS MAN (0.5)
+    - PSI VS POP (0.427)
+
+```{r}
+library(stats)
+ggpairs(q1data, diag = list("continuous"="blank"))
+```
+
+發現變數之間有線性相關，因此我們可以嘗試透過PCA分析，可以降低資料維度。<br>
+其中我們發現`三個`至`四個`主成分即可解釋`81%`及`93%`的變異。
+
+```{r}
+pca.crime <- princomp(scale(q1data,scale=TRUE,center=TRUE),cor=TRUE)
+summary(pca.crime)
+```
+
+接著，我們從Loadings中可以得知以下意涵：
+
+- Comp1 : `空氣污染物質以及工業化程度`與`溫度`的差距
+- Comp2 : `工業化程度與天氣狀況`
+- Comp3 : `易與水發生化學反應的污染物(CO,SO2)被雨水帶走的程度`
+
+```{r}
+loadings(pca.crime)
+```
+
+利用第一與第二主成分描述41個城市：
+
+- Chicago、Philadelphia在第一個主成分為最低值:
+    - 溫度相較於其他城市低，空氣污染物質與工業化程度相對高。
+- Denvor、Salt lack city、Albuquerque在第二主成分為較高值
+    - 因為這三個城市位於西部內陸地區，`降雨量較低`且`人口相對於其他城市較少`
+
+```{r}
+pcs.crime<-predict(pca.crime)
+plot(pcs.crime[,1:2],type="n",xlab='1st PC',ylab='2nd PC') 
+text(pcs.crime[,1:2],row.names(q1data))
+```
+
+# Q2 
+
+首先必須決定因子的個數，<br>
+我可以從p-value準則來決定應該選取的因子個數。
+
+從以下結果我們可以決定`因子個數為4`，且解釋變異可達`85%`。
+
+以下針對四個因素做解釋：
+
+- Factor1 : 該城市之工業化程度與人口數量
+- Factor2 : 該城市之空氣污染指標
+- Factor3 : 該城市之溫室氣體排放量
+- Factor4 : 該城市之天氣狀況
+
+從四個指標我們可以描述各個城市的工業規模、人口數量、空氣狀況、天氣特性。
+
+比較Q1中PCA所得到的主成分發現：
+
+兩個方法得到的主成分相似度很高，如：
+
+- 該城市的工業化程度(PCA之Comp1 Comp2、FA之Factor1)
+- 該城市的空氣污染程度(PCA之Comp1 Comp3、FA之Factor2 Factor3)
+- 該城市的天氣狀況(PCA之Comp2、FA之Factor4)
+
+```{r}
+table<-
+  data.frame(n.factor=c(1:4),
+             p.value=
+               c(factanal(covmat=cor(q1data),factors=1,n.obs = 41)$PVAL,
+                 factanal(covmat=cor(q1data),factors=2,n.obs = 41)$PVAL,
+                 factanal(covmat=cor(q1data),factors=3,n.obs = 41)$PVAL,
+                 factanal(covmat=cor(q1data),factors=4,n.obs = 41)$PVAL))
+table$p.value <- table$p.value %>% round(3)
+table %>% datatable()
+spearman.mle <- factanal(covmat=cor(q1data),factors=4,n.obs = 41,rotation = 'varimax')
+spearman.mle
+```
+
+從各個變數Communality的值可以得知，<br>
+除了降雨量變數以外，因子對於變數的解釋能力都相當高！(大多都高於90%)，<br>
+其中`溫度、工廠數量、二氧化硫`可以被解釋的最好！
+
+```{r}
+1-spearman.mle$uniq
+```
+
+# Q3
+
+選擇 m = 2，<br>
+Goodness of fit = 32%，代表選擇兩個維度不夠。<br>
+另外從圖形來看，並未有明顯的群聚。
+
+```{r}
+variris <- apply(q1data,2,var)
+iris.adjusted <- sweep(q1data,2,sqrt(variris),"/")
+iris.scal <- cmdscale(dist(iris.adjusted),k=2,eig=T)
+eqscplot(iris.scal$points,type="n")
+text(iris.scal$point,row.names(q1data),cex=.8)
+iris.scal$GOF
+```
+
+# Q5
+
+### 資料檢查：
+
+因為CA主要處理類別型變數，所以我們薪資(Wage)變數從連續型轉換成離散型變數。<br>
+轉換方式為透過四分位數將薪資(Wage)切成四等份，也使之後分析結果時易於辨識。
+
+透過CA的方法我們可以找出變數中的類別之間的相似性，<br>
+圖中越近的類別代表他們關聯性越高。
+
+由下圖結果中我們可以發現：
+
+- Wage低於25百分位數(0~25%)、種族為南美洲、服務業，這三個類別很接近(相關度高)
+    - 顯示出南美洲從事服務業的人口薪資所得較低
+    
+- Wage介於50、75百分位數(50~75%)、已婚、男性、高加索人、年紀介於33~48、不住在南部，這幾個類別很接近(相關度高)
+    - 顯示出高加索人，中年已婚男性，非居住於南部的薪資水準較高
+    
+- Wage高於75百分位數(75%~100%)、年紀介於33~48、職業為管理職與專業知識份子、最高教育水準(High Education)
+    - 顯示管理職與專業知識份子且高教育水準的中年人擁有最高的薪資水準
+
+- 從事營造業與教育水準較低、且較高齡具有較高的關聯性
+
+```{r}
+wage %>% 
+  mutate(wage.interval=Wage %>% as.character %>% as.numeric ,
+         wage.interval= cut(wage.interval,
+                            breaks=quantile(wage.interval,probs=c(0,0.25,0.5,0.75,1)),
+                            labels=c('0~25%','25~50%','50~75%','75~100%'))) %>% 
+  select(-Wage) -> wage
+wages.mca <- mca(wage,nf=2,abbrev=TRUE)
+plot(wages.mca,rows=F,cex=0.7)
+```
+
+# Q6 
+
+此資料為X=AZ, Z需為彼此獨立的Component, A為Linearly mixing Matrix。<br>
+
+下列圖表為：
+
+- 左邊代表原始Mixed Signals, 為混合雜訊以及三種聲音源的音訊
+- 右邊代表經過ICA處理後萃取出的original signals, 為三個彼此獨立的音訊
+
+與真實 true dialogs 相比，除了在ICA Source D-1有些許的誤差外，<br>
+幾乎可以確認三個音訊皆出自於這三個ISIS成員！
+
+```{r}
+library(fastICA)
+a <- fastICA(mix,7)
+a$A 
+a$W
+
+par(mfcol = c(3,2))
+plot(1:1000, mix[,1], type = "l", main = "Mixed Signals D-1")
+plot(1:1000, mix[,2], type = "l", main = "Mixed Signals D-2")
+plot(1:1000, mix[,3], type = "l", main = "Mixed Signals D-3")
+plot(1:1000, a$S[,1], type = "l", main = "ICA Source Estimate D-1")
+plot(1:1000, a$S[,2], type = "l", main = "ICA Source Estimate D-2")
+plot(1:1000, a$S[,3], type = "l", main = "ICA Source Estimate D-3")
+```
+

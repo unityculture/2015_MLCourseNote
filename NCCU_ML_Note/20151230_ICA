@@ -1,0 +1,32 @@
+- Preface
+    - FA and ICA 類似
+    但差在ICA加了比較強的假設，不只不相關，還要必須統計上的獨立
+    - ICA的解不為無限解
+    - 不做dimension reduction
+- Introduction to ICA
+    - 例如五個人講話有五隻麥克風，每個人講的話都不相同
+- Formulation of ICA
+    - x1 : 第一隻麥克風，記錄d個人的內容
+- Pre-processing
+    - Centering: 平移
+    - Whitening: 為了cov＝0
+- 做了Whitening之後的好處為
+    - 節省計算時間
+- Non-Gaussian 
+    - 絕對不能是常態分配，因為獨立的假設
+    - 看圖可以知道，不管A怎麼變，答案都是一樣。
+    - ICA的精神就是希望找出唯一解
+- Measure of Nongaussianity
+    - Kurtosis : sensitive to outlier
+    - Entropy
+        - Negentropy : 看離normal有多遠
+        - 
+- Estimation of (Neg)Entropy
+    - 在高維度下估計p(z)的困難性
+    - 使用hyperpolic cos .... 逼近p(z)
+- FastICA
+    - 限制在W為orthonormal下求J(z)之最大值(希望遠離normal)
+- Another Application of ICA: Reducing Noise in Imagines
+    應用在影像處理
+
+- Annotation : 

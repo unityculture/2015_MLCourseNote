@@ -1,0 +1,33 @@
+chapter 6
+
+- 變數選取方法
+    - Regularization : highly recommend
+    - Best subset : performance issue
+    - dimension reduction : not usually
+        - 雖然變數變少，但指標未必直觀
+
+
+- Ridge regression
+    - p > n, 當解太多時, 給予限制式找解
+    - 犧牲bias, 換取較小的variance
+    - landa 大, beta 小
+    - l1norm, l2norm 
+    - Bi比較慢接近0
+- Lasso
+    - Highly recommend 
+    - 具備變數選取
+    - CV 選 landa -> fixed landa -> 看變數的選取
+    - 效果通常比ridge regression 好
+    - Bi比較快接近0
+    - 趨向選擇
+- Case study
+    - 真實狀況：n=50 p=45時, 真實模型中有關的p=2, Lasso比較容易接近真實model
+    - 真實狀況：n-50 p=45時, 真實模型中有關的p=43, Ridge比較容易接近真實model
+    - 不論真實有關的p=多少, Lasso都能得到不錯的解！
+
+- PLS
+    - 把Y的information加進來, 類似PCA
+    - Z1=Y跟X配的模型fit出來的結果
+    - Z2 = Y-Z1與X配的模型fit出來的結果
+    - ...以此類推
+    - 撿菜渣的概念

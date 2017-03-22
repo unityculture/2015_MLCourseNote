@@ -1,0 +1,4 @@
+- Local regression
+    類似移動平均，但有加入kernal function
+- GAM
+    

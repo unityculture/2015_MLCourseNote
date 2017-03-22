@@ -1,0 +1,331 @@
+---
+title: "MachineLearning Project"
+author: "Shenglin"
+date: "2016年2月19日"
+output: 
+  html_document:
+  theme: simplex
+  fig_width: 10
+  fig_height: 7.5
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(leaps)
+library(ISLR)
+library(MASS)
+library(glmnet)
+library(gridExtra)
+
+temp <- NULL
+
+generate.data <- function(true.p,noise.p){
+  for(i in 1:200){
+    temp <- rbind(temp,rnorm(true.p+noise.p))
+  }
+  return(list(temp))
+}
+
+predict.regsubsets = function (object ,newdata ,id ,...){
+  form=as.formula(object$call [[2]])
+  mat=model.matrix(form,newdata)
+  coefi=coef(object ,id=id)
+  xvars=names(coefi)
+  mat[,xvars]%*%coefi }
+```
+
+```{r}
+index <- function(true.num,false.num){
+  ## para setting
+  para <- c(runif(true.num,1,10),rep(0,false.num))
+  train <- sample(1:200,100) 
+  true.select.rate <- NULL
+  false.select.rate <- NULL
+  mse <- NULL
+  r.square <- NULL
+  true.select.rate.lasso <- NULL
+  false.select.rate.lasso <- NULL
+  mse.lasso <- NULL
+  r.square.lasso <- NULL
+  # stepwise simulation
+  for(i in 1:20){
+    ## generating data
+    data.matrix <- generate.data(true.num,false.num)[[1]]
+    data <- cbind(data.matrix %*% para + rnorm(200), data.matrix) %>% as.data.frame
+    ## stepwise -> compute selection rate
+    fit <- lm(V1~.,data=data)
+    step <- stepAIC(fit, direction="both")
+    select <- !paste('- V',2:(true.num+false.num+1),sep='') %in% levels(step$anova[1,1])[-1]
+    true.select.rate <- c(true.select.rate,sum(select[1:true.num])/true.num)
+    false.select.rate <- c(false.select.rate,
+                           sum(select[(true.num+1):(true.num+false.num)])/false.num)
+     ## MSE
+    mse = c(mse,
+            (sum((coef(step)[-1]-para[select])^2)+sum((0-para[!select])^2))/(true.num+false.num))
+     ## R^2 改
+    r.square <- c(r.square,summary(step)['r.squared'][[1]])
+    # lasso model
+    data <- data %>% as.matrix()
+    grid=10^seq(10,-2,length=100)
+    lasso.mod=glmnet(data[,-1],data[,1],alpha=1,lambda=grid)
+    # for landa
+    cv.out=cv.glmnet(data[,-1],data[,1],alpha=1)
+    bestlam=cv.out$lambda.min
+    # lasso with landa
+    lasso.coef=predict(lasso.mod,type="coefficients",s=bestlam)[2:(true.num+false.num+1),]
+      # mse
+    mse.lasso <- c(mse.lasso,mean((lasso.coef-para)^2))
+      # r square
+    lasso.mod=glmnet(data[train,-1],data[train,1],alpha=1,lambda=grid)
+    cv.out=cv.glmnet(data[train,-1],data[train,1],alpha=1)
+    bestlam=cv.out$lambda.min
+    pred <- predict(lasso.mod,newx = data[-train,-1], s = bestlam) 
+    r.square.lasso <- c(r.square.lasso,sum((pred - mean(data[-train,1]))^2)/sum((data[-train,1]-mean(data[-train,1]))^2))
+      # true selection rate
+    true.select.rate.lasso <- c(true.select.rate.lasso,sum(lasso.coef[1:true.num]!=0)/true.num)
+      # false selection rate 
+    false.select.rate.lasso <- c(false.select.rate.lasso,sum(lasso.coef[(true.num+1):(true.num+false.num)]!=0)/false.num)
+    }
+  
+  # result
+  data.frame(method=c(rep(c('stepwise'),length(true.select.rate)),
+                    rep('lasso',length(true.select.rate.lasso))),
+             value=c(true.select.rate,true.select.rate.lasso)) %>% 
+    ggplot(aes(x=method,y=value))+
+    geom_boxplot()+
+    labs(title=' True.select.rate ') -> p1
+  
+  data.frame(method=c(rep(c('stepwise'),length(false.select.rate)),
+                    rep('lasso',length(false.select.rate.lasso))),
+             value=c(false.select.rate,false.select.rate.lasso)) %>% 
+    ggplot(aes(x=method,y=value))+
+    geom_boxplot()+
+    labs(title=' False.select.rate ') -> p2
+  
+  data.frame(method=c(rep(c('stepwise'),length(mse)),
+                    rep('lasso',length(mse.lasso))),
+             value=c(mse,mse.lasso)) %>% 
+    ggplot(aes(x=method,y=value))+
+    geom_boxplot()+
+    labs(title=' MSE ') -> p3
+  
+  data.frame(method=c(rep(c('stepwise'),length(r.square)),
+                    rep('lasso',length(r.square.lasso))),
+             value=c(r.square,r.square.lasso)) %>% 
+    ggplot(aes(x=method,y=value))+
+    geom_boxplot()+
+    labs(title=' R square ') -> p4
+  grid.arrange(p1,p2,p3,p4,nrow=2)
+  }
+```
+
+
+
+```{r,eval=F}
+## para setting
+para <- c(runif(20,1,10),rep(0,40))
+true.select.rate <- NULL
+false.select.rate <- NULL
+mse <- NULL
+r.square <- NULL
+# simulation
+for(i in 1:10){
+  ## generating data
+  data.matrix <- generate.data(20,40)[[1]]
+  data <- cbind(data.matrix %*% para + rnorm(200), data.matrix) %>% as.data.frame
+  ## stepwise -> compute selection rate
+  fit <- lm(V1~.,data=data)
+  step <- stepAIC(fit, direction="both")
+  select <- !paste('- V',2:61,sep='') %in% levels(step$anova[1,1])[-1]
+  true.select.rate <- c(true.select.rate,sum(select[1:20])/20)
+  false.select.rate <- c(false.select.rate,sum(select[21:40])/40)
+  ## MSE
+  mse = c(mse,(sum((coef(step)[-1]-para[select])^2)+sum((0-para[!select])^2))/40)
+  ## R^2
+  r.square <- c(r.square,summary(step)['r.squared'][[1]])
+}
+boxplot(true.select.rate)
+boxplot(false.select.rate)
+boxplot(mse)
+boxplot(r.square)
+```
+
+```{r,eval=F}
+## para setting
+para <- c(runif(20,1,10),rep(0,20))
+true.select.rate <- NULL
+false.select.rate <- NULL
+mse <- NULL
+r.square <- NULL
+# simulation
+for(i in 1:10){
+  ## generating data
+  data.matrix <- generate.data(20,20)[[1]]
+  data <- cbind(data.matrix %*% para + rnorm(200), data.matrix) %>% as.data.frame
+  ## stepwise -> compute selection rate
+  fit <- lm(V1~.,data=data)
+  step <- stepAIC(fit, direction="both")
+  select <- !paste('- V',2:41,sep='') %in% levels(step$anova[1,1])[-1]
+  true.select.rate <- c(true.select.rate,sum(select[1:20])/20)
+  false.select.rate <- c(false.select.rate,sum(select[21:40])/20)
+  ## MSE
+  mse = c(mse,(sum((coef(step)[-1]-para[select])^2)+sum((0-para[!select])^2))/40)
+  ## R^2
+  r.square <- c(r.square,summary(step)['r.squared'][[1]])
+}
+boxplot(true.select.rate)
+boxplot(false.select.rate)
+boxplot(mse)
+boxplot(r.square)
+```
+
+```{r, eval=F}
+## para setting
+para <- c(runif(20,1,10),rep(0,20))
+true.select.rate <- NULL
+false.select.rate <- NULL
+mse <- NULL
+r.square <- NULL
+# simulation
+for(i in 1:10){
+  ## generating data
+  data.matrix <- generate.data(20,20)[[1]]
+  data <- cbind(data.matrix %*% para + rnorm(200), data.matrix) %>% as.data.frame
+  ## stepwise -> compute selection rate
+  fit <- lm(V1~.,data=data)
+  step <- stepAIC(fit, direction="both")
+  select <- !paste('- V',2:41,sep='') %in% levels(step$anova[1,1])[-1]
+  true.select.rate <- c(true.select.rate,sum(select[1:20])/20)
+  false.select.rate <- c(false.select.rate,sum(select[21:40])/20)
+  ## MSE
+  mse = c(mse,(sum((coef(step)[-1]-para[select])^2)+sum((0-para[!select])^2))/40)
+  ## R^2
+  r.square <- c(r.square,summary(step)['r.squared'][[1]])
+}
+boxplot(true.select.rate)
+boxplot(false.select.rate)
+boxplot(mse)
+boxplot(r.square)
+```
+
+```{r index function, eval=F}
+## para setting
+para <- c(runif(20,1,10),rep(0,20))
+true.select.rate <- NULL
+false.select.rate <- NULL
+mse <- NULL
+r.square <- NULL
+# simulation
+for(i in 1:10){
+  ## generating data
+  data.matrix <- generate.data(20,20)[[1]]
+  data <- cbind(data.matrix %*% para + rnorm(200), data.matrix) %>% as.data.frame
+  ## stepwise -> compute selection rate
+  fit <- lm(V1~.,data=data)
+  step <- stepAIC(fit, direction="both")
+  select <- !paste('- V',2:41,sep='') %in% levels(step$anova[1,1])[-1]
+  true.select.rate <- c(true.select.rate,sum(select[1:20])/20)
+  false.select.rate <- c(false.select.rate,sum(select[21:40])/20)
+  ## MSE
+  mse = c(mse,(sum((coef(step)[-1]-para[select])^2)+sum((0-para[!select])^2))/40)
+  ## R^2
+  r.square <- c(r.square,summary(step)['r.squared'][[1]])
+}
+boxplot(true.select.rate)
+boxplot(false.select.rate)
+boxplot(mse)
+boxplot(r.square)
+```
+
+## 20x20
+
+```{r,results='hide'}
+index(20,20)
+```
+
+
+## 20x40
+
+```{r,results='hide'}
+index(20,40)
+```
+
+## 20x60
+
+```{r,results='hide'}
+index(20,60)
+```
+
+## 40x20
+
+```{r,results='hide'}
+index(40,20)
+```
+
+## 40x40
+
+```{r,results='hide'}
+index(40,40)
+```
+
+## 40x60
+
+```{r,results='hide'}
+index(40,60)
+```
+
+## 60x20
+
+```{r,results='hide'}
+index(60,20)
+```
+
+## 60x40
+
+```{r,results='hide'}
+index(60,40)
+```
+
+## 60x60
+
+```{r,results='hide'}
+index(60,60)
+```
+
+```{r stepwise, eval=F}
+
+train <- sample(1:200,100)
+regfit.fwd=regsubsets(V1~.,data=data[train,], nvmax =40 , method = 'backward') # 
+test.mat=model.matrix(V1~.,data=data[-train,]) # test資料 產生成矩陣的的形式 方便等等計算
+val.errors=rep(NA,40)
+for(i in 1:40){
+  coefi=coef(regfit.fwd,id=i) # 按照順序被選近的變數係數
+  pred=test.mat[,names(coefi)]%*%coefi # 按照順序被選近的變數去pred
+  val.errors[i]=mean((data$V1[-train]-pred)^2) } # 按照加入變數的個數做算MSE
+# val.errors # 列出加入變數個數的MSE
+min <- which.min(val.errors) # 找出最小MSE的變數組合
+para <- coef(regfit.fwd ,min) # 建議挑出20個
+true.para.rate <- sum(names(para)[-1] %in% paste('V',2:21,sep=''))/
+  
+  # CV for 20 fold
+  k=20
+folds=sample(1:k,nrow(data),replace=TRUE)
+cv.errors=matrix(NA,k,40, dimnames=list(NULL, paste(1:40)))
+
+for( j in 1:k){
+  fwd.fit=regsubsets(V1~.,data=data[folds!=j,],nvmax = 40, method='forward')
+  for( i in 1:40){
+    pred=predict(fwd.fit,data[folds==j,],id=i)
+    cv.errors[j,i]=mean((data$V1[folds==j]-pred)^2)
+  }
+}
+
+mean.cv.errors=apply(cv.errors ,2,mean)
+par(mfrow=c(1,1))
+plot(mean.cv.errors ,type='b')
+```
+
+
+
