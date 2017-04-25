@@ -1,6 +1,6 @@
 ---
-title: "LDA with R"
-author: "[Lin](https://www.linkedin.com/in/lincingsheng/)"
+title: "Linear Discriminant Analysis in R"
+author: "**Author : [Lin](https://www.linkedin.com/in/lincingsheng/)**"
 output:
   rmdformats::html_clean:
     highlight: kate
@@ -12,7 +12,7 @@ output:
 knitr::opts_chunk$set(comment="",prompt=T,strip.white=F,warning=FALSE,message=F)
 ```
 
-## Introduction
+# Introduction
 
 本篇 LDA with R 是在我做完[LDA參考筆記](20170404_LDA.html)後，利用範例資料集與 Kaggle 中實際資料做 LDA 演練。重點僅放在如何在 R 中實現 LDA 模型，對於範例資料集與 Kaggle 資料所建立的模型，不會調整或是優化模型。
 
