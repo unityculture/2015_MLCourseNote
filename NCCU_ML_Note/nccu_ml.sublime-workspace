@@ -20,14 +20,32 @@
 	"buffers":
 	[
 		{
-			"contents": "# Preview Note\n\n## Goals\n\n$P_r(Y=k | X=x) = \\frac{\\pi_k   f_k (x)}{\\sum_{l=1}^{K} \\pi_l   f_l (x)}$\n\n\n## Steps\n\n- 計算每一組k的 $x_k$ \n- 計算不分組的 $\\bar{x}$\n- 計算組間變異和\n- 計算組內變異和\n- 找到最佳的線性組合(a)使得，$\\frac{組間變異}{組內變異}$ 最大值\n    + 所有可得解為 min(K-1, m) = r \n\n> 所有可得解皆使 $\\frac{a'Ba}{a'Wa} $達到最大值。\n\n### How to classify new object ? \n\n![img](/Users/sheng/Pictures/Screenshot/img3.jpg)\n\n在Step5得到的Linear Discriminants（LD, 即 $W^{-1}B$的Eigenvector）可以看作一種投影(線性組合)。如果r = 2的情況，會將新的資料投影到LD Space。比較新資料在LD Space中與k個類別中心的距離，類別預測的判定則基於最短距離。\n\n# Questions\n\n- Risk Function 算法？\n- Multiple variables, how to calculate between-group variance matrix, and within- group Variance?\n- how to find optimal values of a(linear combinations of variables)\n- 高維度計算效能？\n- 線性代數版的LDA沒有假設，那跟Normal版的有沒有差異？\n- Outlier影響嚴不嚴重\n\n# R labs\n\n",
+			"contents": "# Fisher Approach\n\n## Goals\n\n - Taking linear combinations a'X of the attributes in T so that different classes can be best distinguished.\n - $max \\frac{a'Ba}{a'Wa}$ \n\n## Steps\n\n- 計算每一組k的 $x_k$ \n- 計算不分組的 $\\bar{x}$\n- 計算 between-group variance matrix \n- 計算 within-group variance matrix\n- 排序$W^{-1}B$ eigenvalue，取 r eigenvector, $p$ X  $r$ dimension matrix $W^{-1}B$\n    + 所有可得解為 min(K-1, p) = r\n\n## How to classify new object ? \n\n<center>\n    <img src=\"/Users/sheng/Pictures/Screenshot/img3.jpg\" style=\"width: 40%; height: 40%\" />​\n</center>\n\n在Step5得到的 Linear Discriminants（LD, 即 $W^{-1}B$的Eigenvector）可以看作一種投影(線性組合)。如果r = 2的情況，會將新的資料投影到LD Space。比較新資料在LD Space中與k個類別中心的距離，類別預測的判定則基於最短距離。\n\n實際上我們可以投影到的 r 可以選擇在 ≤ min(K-1, p)\n\n# Bayesian Approach\n\n## Goals\n\n- $P_r(Y=k | X=x) = \\frac{\\pi_k   f_k (x)}{\\sum_{l=1}^{K} \\pi_l   f_l (x)}$\n- To estimate  $\\pi_k$ and $f_k (x)$ from  $\\frac{\\pi_k   f_k (x)}{\\sum_{l=1}^{K} \\pi_l   f_l (x)}$\n- Assume Normal Distribution & Common Variance on $f_x(x)$, if Common Variance is violated, then uses QDA.\n\n## How to classify new object ? \n\n#### Discriminant Functions :\n\n$\\delta_k(x) = x^T\\sum^{-1}\\mu_k - \\frac{1}{2}\\mu_k^T\\sum^{-1}\\mu_{k} + log(\\pi_k)$\n\n歸類給 K 當 $\\delta_k(x)$   \n\n#### Boundary Decision :\n\nBoundary發生在 $\\delta_i(x)$ = $\\delta_j(x)$ , for all $i, j \\in k$\n\n\n# Questions\n\n>- 今天花了一個小時了解 Fisher（線代解） & Bayesian Approach（課本解） 的差異。\n但還是無法抓到重點。希望LDA或是其他夥伴可以幫忙理解看看XD\nhttp://stats.stackexchange.com/questions/87975/bayesian-and-fishers-approaches-to-linear-discriminant-analysis\n整理一些我目前了解的片面結論：\n1. Bayesian Assume normal & common variance. 若違反variance的假設 就變成QDA去解\n2. Fisher 有 Dimension Reduction 的效果，可以降到 min( 組別數-1, 變數個數）以下的維度\n3. Why min(k-1, p)?\n\n>- PCA vs LDA ?   \n**相似之處** : 兩者都是用線性組合技巧\nPCA : unsupervised, 忽略class labels, goal : 找到最大變異的方向\nLDA : supervised, goal : 找到切割越好的軸，投影上去\n<img src=\"http://sebastianraschka.com/images/blog/2014/linear-discriminant-analysis/lda_1.png\" style=\"width: 40%; height: 40%\"/>​\n[PCA vs LDA 參考](http://sebastianraschka.com/Articles/2014_python_lda.html#a-comparison-of-pca-and-lda)\n\n> - Logistic Regression vs LDA\n\n> - Multiple variables, how to calculate between-group variance matrix, and within- group Variance?\n\n> - how to find optimal values of a(linear combinations of variables)\n\n> - 高維度計算效能？\n\n> - Outlier影響嚴不嚴重\n\n# Reference \n\n- [What is the correct formula for between-class scatter matrix in LDA?](http://stats.stackexchange.com/questions/123490/what-is-the-correct-formula-for-between-class-scatter-matrix-in-lda)\n\n# R labs\n\n<img src=\"\" alt=\"\">",
 			"file": "2017/20170404_LDA.md",
-			"file_size": 1122,
-			"file_write_time": 131359232480000000,
+			"file_size": 3056,
+			"file_write_time": 131366138910000000,
 			"settings":
 			{
-				"buffer_size": 779,
+				"buffer_size": 2527,
 				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "\"年資：不拘，歡迎應屆畢業或轉換跑道新人\n\n必要條件 (至少具備一項)：\n1. 熟悉 Python 及 Numpy, Pandas, Scikit-learn 套件\n2. 熟悉 R 及統計理論 v\n3. 強烈渴望學習成長，未來成為專業資料分析師/科學家 v\n\n加分：\n1. Kaggle 分析競賽經驗 \n2. 各項資訊專題競賽、黑客松、書卷獎 vv\n3. 資料分析相關學術論文發表 vv\n4. 具備商業分析專案經驗 vv\n5. 具備工業設備分析專案經驗\n6. 熟悉資料視覺化圖表 vv\n7. 英文語言能力佳  (多益860分以上) 或母語者\n8. 日文語言能力佳 (日文 N1) 或母語者\n\n----\n\n1. 協助開發 Data cleaning、Data preprocessing、feature engineering、modeling 等自動化資料分析系統\n2. 協助客戶將資料及系統導入 Decanter AI Engine 產品服務\n3. 開發優化 Decanter AI Engine 資料分析演算法\n4. 整合優化 NN 系列 Deep Learning 資料分析演算法\n5. 協助發表學術論文、撰寫專利及案例分析\n\n----\n\n「為什麼我可以成為人選之一?」\n\n> 擁抱挑戰與成長突破\n挑戰亞洲跨國黑客競賽，在一天半的期限內，按照自選的主題製作出符合MVP的產品。擔任團隊領導的角色，需在短時間內規劃整個資料分析流程，從資料收集、清理、合併、分析、視覺化、產品製作，是一大挑戰，但也讓我在挑戰中突破與進步，最後也很幸運地得到冠軍的殊榮。\n\n> 熟悉資料科學工具、具備分析與資料視覺化經驗\n熱愛 R 語言，曾擔任 R 講師與助教。撰寫論文時，使用 SQL 處理大量且多元健保資料庫，並透過探索性資料分析、資料視覺化探索國人就醫行為。實習時，運用機器學習在使用者輪廓標記，協助找出廣告投放的目標族群。\n\n> 強烈渴望學習成長\n目前我持續精進機器學習理論、推薦系統，經常參與台灣資料科學協會的課程。也利用線上課程在學習 Python 和 Front-end。未來目標：打造以演算法為核心的產品，成為有影響力的資料科學家。\n\n「為什麼我會選擇 Mobagel ?」\n\n> 適合我的工作環境\n根據過往實習經驗，喜歡開放的工作環境氣氛，能夠將想法快速應用。此外，Mobagel 能使我持續進步與提升，甚至有機會能夠至海外工作，實現工作即生活的嚮往。\n\n> 實現個人目標的機會\n將有機會接觸人工智慧引擎Decanter™，學習如何透過演算法打造、維護產品。",
+			"settings":
+			{
+				"buffer_size": 1080,
+				"line_ending": "Unix",
+				"name": "\"年資：不拘，歡迎應屆畢業或轉換跑道新人"
+			}
+		},
+		{
+			"contents": "- Kyper TA是誰？大陸、台灣 供應鍊 大廠\n- 數據從哪裡來？\n- 幫助企業整合資料，以及提供kyper的數據，提供dashboard？\n\n## Data\n\n建立模型\n第三方資料\n\nAI 服務：\n\n理財機器人\n\n公司狀況：\n- 十人、跟美國長期合作\n- 把這種不同股市、金融資料庫整合 -> 取用金融資料\n- 預計中國AI研究院 -> 供應鍊豐富的地方 \n\n需求：\n- R or python\n- ML 不用懂很深\n- 來之後 中研院 訓練1~3個月，派到簽約的客戶那邊，工作內容基於那間公司\n\nQ：\n- 1 ~ 3 個月 \n- ",
+			"settings":
+			{
+				"buffer_size": 269,
+				"line_ending": "Unix",
+				"name": "- Kyper TA是誰？大陸、台灣 供應鍊 大廠"
 			}
 		}
 	],
@@ -55,9 +73,29 @@
 	"command_palette":
 	{
 		"height": 354.0,
-		"last_filter": "mark",
+		"last_filter": "save",
 		"selected_items":
 		[
+			[
+				"save",
+				"Markdown Preview: Save to HTML"
+			],
+			[
+				"amrkd",
+				"Set Syntax: Markdown"
+			],
+			[
+				"markdown preview ",
+				"Markdown Preview: Save to HTML"
+			],
+			[
+				"markdow perview",
+				"Markdown Preview: Save to HTML"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
 			[
 				"mark",
 				"Set Syntax: Markdown"
@@ -65,10 +103,6 @@
 			[
 				"markdown",
 				"Set Syntax: Markdown"
-			],
-			[
-				"install",
-				"Package Control: Install Package"
 			],
 			[
 				"pack",
@@ -139,7 +173,7 @@
 				"Package Control: Install Package"
 			]
 		],
-		"width": 521.0
+		"width": 539.0
 	},
 	"console":
 	{
@@ -171,32 +205,43 @@
 	},
 	"expanded_folders":
 	[
-		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/2017"
 	],
 	"file_history":
 	[
+		"/Users/sheng/Documents/Learning/front-end/R_css/modest.css",
+		"/Users/sheng/Documents/Jobs/Resume/Backlog/面試經驗紀錄/Acer 面試考題.mdown",
+		"/Users/sheng/Downloads/lastfm-matrix-germany.csv",
+		"/Users/sheng/Documents/DSP/Taipower/開放資料.md",
+		"/Users/sheng/Documents/DSP/Power_HackathonAsia/data_hack.csv",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/MarkdownPreview.sublime-settings",
+		"/Users/sheng/Desktop/mysetting.json",
+		"/Users/sheng/Desktop/tmp/README.md",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/2017/20170404_LDA.md",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/MarkdownEditing/Default (OSX).sublime-keymap",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/Markdown Preview/MarkdownPreview.sublime-settings",
+		"/Users/sheng/Documents/Learning/front-end/R_css/modest_default.css",
+		"/Users/sheng/Documents/Learning/front-end/css/github_cust.css",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/shengimg",
+		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/nccu_ml.sublime-project",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/Markdown (Standard).sublime-settings",
+		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/MarkdownEditing/Markdown (Standard).sublime-settings",
+		"/Users/sheng/Documents/Learning/front-end/css/github.css",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/2017/20170402_KNN",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151007_classification",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/2017/20170404_LDA",
-		"/Users/sheng/Documents/Learning/front-end/css/github_cust.css",
-		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/MarkdownPreview.sublime-settings",
 		"/Users/sheng/Pictures/Screenshot/img 2017-04-04 下午10.40.51.jpg",
 		"/Users/sheng/Documents/Learning/front-end/css/modest.css",
 		"/Users/sheng/Desktop/markdown8.css",
 		"/Users/sheng/Documents/Learning/front-end/css/markdown8.css",
-		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/Markdown Preview/MarkdownPreview.sublime-settings",
-		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/MarkdownEditing/Markdown (Standard).sublime-settings",
 		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/MarkdownEditing/Markdown.sublime-settings",
-		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/Markdown (Standard).sublime-settings",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/20151014_lda_qda_lr.R",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/20151028_SVM.Rmd",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/20151014_LD_hw.Rmd",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151230_ICA",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/YueTeam/20160114_chapter7",
 		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/Side Bar.sublime-settings",
-		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
 		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/User/Side Bar Folders.sublime-settings",
 		"/Users/sheng/Library/Application Support/Sublime Text 3/Packages/SideBarEnhancements/Default (OSX).sublime-keymap",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151125_MDS",
@@ -213,7 +258,6 @@
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/fisher.txt",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/20151125_PCA",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151216_Correspondence Analysis",
-		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/nccu_ml.sublime-project",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151125_PCA",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/lab/Midterm/wine_data_intro.txt",
 		"/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/20151104_clustering",
@@ -258,7 +302,7 @@
 	],
 	"find":
 	{
-		"height": 96.0
+		"height": 72.0
 	},
 	"find_in_files":
 	{
@@ -273,6 +317,18 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"auc",
+			"h1",
+			"bold",
+			"font-size",
+			"font-s",
+			"log",
+			"img",
+			"<a href=\"#\">",
+			"frac",
+			"word_wrap",
+			"font",
+			"歷練",
 			"\n",
 			"late",
 			"lat",
@@ -341,23 +397,23 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 779,
+						"buffer_size": 2527,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								101,
-								101
+								1348,
+								1349
 							]
 						],
 						"settings":
 						{
 							"WordCount":
 							{
-								"changes": 0,
-								"count": 58,
+								"changes": 4,
+								"count": 230,
 								"modified": false,
 								"selection": false,
 								"status": -1,
@@ -381,26 +437,26 @@
 							},
 							"bracket_highlighter.regions":
 							[
-								"bh_curly",
-								"bh_curly_center",
-								"bh_curly_open",
-								"bh_curly_close",
-								"bh_curly_content",
 								"bh_c_define",
 								"bh_c_define_center",
 								"bh_c_define_open",
 								"bh_c_define_close",
 								"bh_c_define_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
 								"bh_angle",
 								"bh_angle_center",
 								"bh_angle_open",
 								"bh_angle_close",
 								"bh_angle_content",
-								"bh_round",
-								"bh_round_center",
-								"bh_round_open",
-								"bh_round_close",
-								"bh_round_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
 								"bh_double_quote",
 								"bh_double_quote_center",
 								"bh_double_quote_open",
@@ -411,42 +467,270 @@
 								"bh_default_open",
 								"bh_default_close",
 								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
 								"bh_regex",
 								"bh_regex_center",
 								"bh_regex_open",
 								"bh_regex_close",
 								"bh_regex_content",
-								"bh_single_quote",
-								"bh_single_quote_center",
-								"bh_single_quote_open",
-								"bh_single_quote_close",
-								"bh_single_quote_content",
-								"bh_square",
-								"bh_square_center",
-								"bh_square_open",
-								"bh_square_close",
-								"bh_square_content",
 								"bh_unmatched",
 								"bh_unmatched_center",
 								"bh_unmatched_open",
 								"bh_unmatched_close",
 								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content"
+							],
+							"color_scheme": "Packages/User/Color Highlighter/themes/MarkdownEditor.tmTheme",
+							"origin_encoding": "UTF-8",
+							"parser": "markdown",
+							"side_bar_folders_auto_load_folder": 1,
+							"syntax": "Packages/MarkdownEditing/Markdown.tmLanguage",
+							"target": "save"
+						},
+						"translation.x": 0.0,
+						"translation.y": 1140.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1080,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1028,
+								1028
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 0,
+								"count": 82,
+								"modified": false,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"auto_name": "\"年資：不拘，歡迎應屆畢業或轉換跑道新人",
+							"bracket_highlighter.busy": false,
+							"bracket_highlighter.locations":
+							{
+								"close":
+								{
+								},
+								"icon":
+								{
+								},
+								"open":
+								{
+								},
+								"unmatched":
+								{
+								}
+							},
+							"bracket_highlighter.regions":
+							[
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
 								"bh_tag",
 								"bh_tag_center",
 								"bh_tag_open",
 								"bh_tag_close",
-								"bh_tag_content"
+								"bh_tag_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content"
 							],
-							"is_init_dirty_state": true,
-							"origin_encoding": "UTF-8",
-							"side_bar_folders_auto_load_folder": 1,
-							"syntax": "Packages/MarkdownEditing/Markdown.tmLanguage"
+							"default_dir": "/Users/sheng/Documents/NCCU/ML/NCCU_ML_Note/2017",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
 						},
 						"translation.x": 0.0,
-						"translation.y": 116.0,
+						"translation.y": 774.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 269,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								115,
+								115
+							]
+						],
+						"settings":
+						{
+							"WordCount":
+							{
+								"changes": 0,
+								"count": 24,
+								"modified": true,
+								"selection": false,
+								"status": -1,
+								"syntax": "plain text"
+							},
+							"auto_name": "- Kyper TA是誰？大陸、台灣 供應鍊 大廠",
+							"bracket_highlighter.busy": false,
+							"bracket_highlighter.locations":
+							{
+								"close":
+								{
+								},
+								"icon":
+								{
+								},
+								"open":
+								{
+								},
+								"unmatched":
+								{
+								}
+							},
+							"bracket_highlighter.regions":
+							[
+								"bh_c_define",
+								"bh_c_define_center",
+								"bh_c_define_open",
+								"bh_c_define_close",
+								"bh_c_define_content",
+								"bh_curly",
+								"bh_curly_center",
+								"bh_curly_open",
+								"bh_curly_close",
+								"bh_curly_content",
+								"bh_angle",
+								"bh_angle_center",
+								"bh_angle_open",
+								"bh_angle_close",
+								"bh_angle_content",
+								"bh_square",
+								"bh_square_center",
+								"bh_square_open",
+								"bh_square_close",
+								"bh_square_content",
+								"bh_double_quote",
+								"bh_double_quote_center",
+								"bh_double_quote_open",
+								"bh_double_quote_close",
+								"bh_double_quote_content",
+								"bh_default",
+								"bh_default_center",
+								"bh_default_open",
+								"bh_default_close",
+								"bh_default_content",
+								"bh_tag",
+								"bh_tag_center",
+								"bh_tag_open",
+								"bh_tag_close",
+								"bh_tag_content",
+								"bh_round",
+								"bh_round_center",
+								"bh_round_open",
+								"bh_round_close",
+								"bh_round_content",
+								"bh_regex",
+								"bh_regex_center",
+								"bh_regex_open",
+								"bh_regex_close",
+								"bh_regex_content",
+								"bh_unmatched",
+								"bh_unmatched_center",
+								"bh_unmatched_open",
+								"bh_unmatched_close",
+								"bh_unmatched_content",
+								"bh_single_quote",
+								"bh_single_quote_center",
+								"bh_single_quote_open",
+								"bh_single_quote_close",
+								"bh_single_quote_content"
+							],
+							"color_scheme": "Packages/User/Color Highlighter/themes/predawn.tmTheme",
+							"parser": "markdown",
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"target": "browser"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
 					"type": "text"
 				}
 			]
@@ -454,7 +738,7 @@
 	],
 	"incremental_find":
 	{
-		"height": 33.0
+		"height": 34.0
 	},
 	"input":
 	{
@@ -485,7 +769,7 @@
 	"menu_visible": true,
 	"output.exec":
 	{
-		"height": 24.0
+		"height": 55.0
 	},
 	"output.find_results":
 	{
@@ -499,7 +783,7 @@
 	"project": "nccu_ml.sublime-project",
 	"replace":
 	{
-		"height": 62.0
+		"height": 64.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -519,7 +803,15 @@
 		[
 			[
 				"",
-				"~/Documents/Learning/py/PythonLearning.sublime-project"
+				"~/Documents/Learning/R/Project_RecSys/booker/booker.sublime-project"
+			],
+			[
+				"whoscl",
+				"~/Documents/Whoscall/whoscall.sublime-project"
+			],
+			[
+				"booke",
+				"~/Documents/Learning/R/Project_RecSys/booker/booker.sublime-project"
 			]
 		],
 		"width": 380.0
@@ -541,7 +833,7 @@
 	"show_open_files": true,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 130.0,
+	"side_bar_width": 132.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{

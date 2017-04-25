@@ -1,0 +1,270 @@
+---
+title: "LDA with R"
+author: "[Lin](https://www.linkedin.com/in/lincingsheng/)"
+output:
+  rmdformats::html_clean:
+    highlight: kate
+  toc: true
+  toc_depth: 2
+---
+
+```{r, echo=F}
+knitr::opts_chunk$set(comment="",prompt=T,strip.white=F,warning=FALSE,message=F)
+```
+
+## Introduction
+
+本篇 LDA with R 是在我做完[LDA參考筆記](20170404_LDA.html)後，利用範例資料集與 Kaggle 中實際資料做 LDA 演練。重點僅放在如何在 R 中實現 LDA 模型，對於範例資料集與 Kaggle 資料所建立的模型，不會調整或是優化模型。
+
+所使用的 Dataset 可以在這邊下載:
+
+- Smarket(`ISRL` 套件中)
+- [Kaggle_creictcard](https://www.kaggle.com/dalpozz/creditcardfraud)
+
+---
+
+# Smarket 範例資料
+
+## Modeling
+
+`LDA` 的在 R 的 `MASS` 套件中，可以直接呼叫 `lda` 即可。首先我們以 An Introduction to Statistical Learning 書中的範例來練習如何使用LDA做分類的問題。
+
+首先我們可以以下載入套件：
+
+- `magrittr`、`tidyverse`：pipeline所需的運算子
+- `MASS`：包含 LDA 的 function
+- `ISLR`：包含範例資料集 `Smarket`，其中 `Direction` 當做目標變數(up, down)
+
+我們先將 Smarket 分成 Train and Test，在使用 train 丟進 lda 去建模。我們先以` p = 2 `作示範，因此LDA的 Features Space ≤ min(2-1, 2) = 1。
+
+`?lda` 可以參考一下參數的設定：
+
+- `prior`：可以預先設定 Up & Down $\pi_{k}$
+- `CV`：是否要做CV
+
+```{r}
+library(magrittr)
+library(rpart)
+library(MASS)
+library(ISLR)
+library(tidyverse)
+train <- Smarket %>% filter(Year < 2005)
+lda.fit <- lda(Direction ~ Lag1 + Lag2, data = train)
+lda.fit %>% attributes()
+```
+
+因 Fisher approach 有 Dimension Reduction 的好處，透過 $A'X$ = $T$ 將原先的 Vaiables 投影到新的 Feature Space。在 ISRL 的範例中，因為 r = 1，因此等於將原先的 Lag1、Lag2 投影到 LD1 上。 
+
+```{r}
+lda.fit$scaling
+```
+
+Group means :
+
+```{r}
+lda.fit$means
+```
+
+## Predicttion
+
+建立一個Test dataset:
+
+- Smarket.2005
+- Direction.2005
+
+用 Test 資料 `Smarket.2005` 進行預測，並且在跟真實答案 `Direction.2005` 作比較。
+
+```{r}
+Smarket.2005 <- Smarket %>% filter(Year >= 2005)
+Direction.2005 <- Smarket %>% filter(Year >= 2005) %$% Direction
+lda.pred = predict(lda.fit, Smarket.2005)
+names(lda.pred)
+```
+
+計算 ACC 正確率
+
+```{r}
+lda.class <- lda.pred$class
+table(lda.class,Direction.2005)
+mean(lda.class == Direction.2005)
+```
+
+從 ACC 看出其實分類的成效不太好，從圖形上也可以略知一二。我們將 Lag1、Lag2 投影到 LD1 ，可以看出兩類在 LD1 無法切割開來。
+
+```{r}
+train.lda <- data.frame(
+  lda1 = train$Lag1*lda.fit$scaling[1] + train$Lag2*lda.fit$scaling[2],
+  Direction = train$Direction
+)
+ggplot(train.lda, aes(x = lda1, fill = Direction)) + 
+  geom_histogram(position="identity", aes(alpha = 0.1))+
+  geom_blank()+
+  guides(alpha = F)
+```
+
+lda 模型的物件中，也提供 posterior ，可以自行定義 Threshold 來進行歸類。
+
+```{r}
+head(lda.pred$posterior)
+```
+
+# Kaggle Challenge !
+
+接下來我們來試試看將 lda 應用至 kaggle 選定的資料中。接下來我們會簡單演練一次：資料整理、模型建立、模型評估 整個過程，除了 Accuracy Rate 以外，我還嘗試了 `AUC` 以及 Kaggle 用來評分的 `AUCPR` 指標。那我們就開始吧！
+
+欄位介紹：
+
+- V1, V2, ... V28 are the principal components obtained with PCA
+- Time、Amount：時間(秒為單位，指從第一刻開始發生每筆交易所經過的秒數)、交易金額
+- Class：1 = Fraud, 0 = otherwise
+
+```{r}
+library(data.table)
+library(DT)
+library(ROCR)
+library(highcharter)
+kaggle_credictcard <- fread('dataset/kaggle_creditcard.csv')
+kaggle_credictcard %>% head %>% datatable() %>% formatRound(2:29, digits = 4)
+```
+
+
+## Preliminary Analysis & Pre-processing 
+
+注意！此份資料相當不平衡 (Imbalance Case)。
+
+```{r}
+kaggle_credictcard %>% 
+  group_by(Class) %>% 
+  tally %>% 
+  mutate(prop = n/(sum(n))) -> tmp
+highchart() %>%
+  hc_title(text = "Fraud Proportion") %>%
+  hc_subtitle(text = "Fraud is extremly less") %>% 
+  hc_add_series_labels_values(labels = tmp$Class, values = tmp$n,
+                              name = "Bar", type = "pie") 
+```
+
+接下來要將資料分成 Train and Test，但先 check 有沒有重複的 Observation。
+
+發現有重複的值，利用 `distinct` function 將重複值去除，命名成 `kaggle_credictcard_no_dup`。在 Check 一次有沒有重複值，得到 `False`
+
+```{r}
+any(duplicated(kaggle_credictcard)) #yes!
+kaggle_credictcard %>% 
+  distinct(.) -> kaggle_credictcard_no_dup # conflict to MASS
+any(duplicated(kaggle_credictcard_no_dup)) #False
+```
+
+清除完重複值之後，呼叫 `sample_frac` 抽取 `kaggle_credictcard_no_dup` 70% 的資料為 `train`。再呼叫 `setdiff` 將剩餘的資料(也就是`kaggle_credictcard_no_dup` 與 `Train` 取補集合)為 `test`。並且都將 `Time` and `Amount` 去除掉。
+
+```{r}
+train <- sample_frac(kaggle_credictcard_no_dup, 0.7)
+test <- setdiff(kaggle_credictcard_no_dup, train)
+# check 
+# (nrow(train) + nrow(test)) == nrow(kaggle_credictcard_no_dup)
+# drop columns 
+train %<>% select(-Time, -Amount)
+test %<>% select(-Time, -Amount)
+```
+
+到這邊我們就大致整理好資料了(沒有重複的資料列、切割好訓練以及測試資料)。
+
+## Modeling
+
+如同範例資料集所示，簡單利用 `lda` and `predict` 就可以進行建模與預測。
+
+```{r}
+lda.fit <- lda(Class ~ ., data = train)
+pred <- predict(lda.fit, newdata = test %>% select(-Class))
+```
+
+## Evaluation
+
+### Confusion Matrix 與 Accuracy Rate(ACC)
+
+Confusion Matrix 為常見的模型評估方式之一。
+
+`lda` 預設當 Threshold 設定在 0.5 ，判斷是 1(Fraud) or 0。以下的 Confusion Matrix 為在此條件下所得到的分類結果。接著我們可以藉由 Confusion Matrix 的結果計算，在 Threshold = 0.5 的情況下，模型 `Accuracy Rate(ACC)` 準確度有多高。以此為例，ACC = `r round((table(pred$class, test$Class)[1]+table(pred$class, test$Class)[4])/sum(table(pred$class, test$Class)),4)`
+
+```{r}
+table(pred$class, test$Class)
+```
+
+
+### Imbalance Dataset 適合用 ACC 作為指標嗎？ 
+
+即便整體ACC達到99%，在 Imbalance 的情況下(Fraud很稀少)，只要發生 Type II error，所產生的成本則會相當可觀。例如：使犯人縱虎歸山、詐騙繼續當街橫行。因此 `Accuracy Rate` 不會是最優先考量的模型評估指標，我們應該考量的是 Recall & Precision。
+
+![](http://images.slideplayer.com/8/2414001/slides/slide_9.jpg)
+
+- Recall : 被模型正確分類為 Fraud 的個數 / 真實的 Fraud 的個數
+- Precision : 被模型正確分類為 Fraud 的個數 / 被模型分類為 Fraud 的個數
+
+Precision 為`r round(table(pred$class, test$Class)[4]*100/(table(pred$class, test$Class)[4] + table(pred$class, test$Class)[2]),0)`% ，與 ACC 的99% 存在著不小的差異。換句話說，LDA模型有 19% 的機會誤判為Fraud。而 Recall 僅為`r round(table(pred$class, test$Class)[4]*100/(table(pred$class, test$Class)[4] + table(pred$class, test$Class)[3]),0)`%。換句話說，LDA模型有 24% 的 Fraud 會無法判斷，縱虎歸山的傷害相當大。
+
+因此，Imbalance Case 不能只使用 ACC 作為唯一模型評估方式。還要綜合 Recall & Precision 等指標來參考。
+
+```{r}
+table(pred$class, test$Class)
+```
+
+### 除了 Threshold 為 0.5 ，那其他切點呢？
+
+而剛剛我們討論的都是在 Threshold 為 0.5 的情況下，所進行分類的模型結果。如果我們要評估所有 Threshold 的分類結果時，有沒有什麼指標可以作為參考？
+
+最常見的就是[ AUC 指標](https://zh.wikipedia.org/wiki/ROC%E6%9B%B2%E7%BA%BF)。根據 AUC 一般定義：
+
+- AUC=0.5 (no discrimination 無鑑別力)
+- 0.7≦AUC≦0.8 (acceptable discrimination 可接受的鑑別力)
+- 0.8≦AUC≦0.9 (excellent discrimination 優良的鑑別力)
+- 0.9≦AUC≦1.0 (outstanding discrimination 極佳的鑑別力)
+
+在R中我們可以利用 `ROCR` 套件幫我們計算出 AUC 值：0.98。
+
+```{r}
+pr <- prediction(pred$posterior[,2], test$Class)
+auc_slot <- performance(pr,"auc") # ?performace 看看 measure 參數可以多少東西
+auc <- unlist(slot(auc_slot, "y.values"))
+auc %>% round(3)
+```
+
+ROC Curve ：
+
+```{r}
+perf <- performance(pr,"tpr","fpr")
+plot(perf)
+```
+
+但其實到目前為止，AUC 對我們來說還不算是最好的指標。我們還需要另外一個指標，以就是 Kaggle 指定只用的 `AUPRC` (Area Under Precision-Recall Curve)，想要了解更多 ROC 與 PRC 的關係可以參考[這篇](http://pages.cs.wisc.edu/~jdavis/davisgoadrichcamera2.pdf)。而關於 AUPRC 在 R 中的使用方法則可以[參考這篇](https://cran.r-project.org/web/packages/PRROC/vignettes/PRROC.pdf)
+
+文中提到：
+
+> When dealing with highly skewed datasets, Precision-Recall(PR) curves give a more informative picture of an algorithm’s performance
+
+### AUCPR
+
+接著我們利用 `prcbench` 套件來算 AUPRC 的值。
+
+與 ROC 類似，會建立 prediction 物件，在接著用 pr.curve 。其中第一個參數要放 真實為 Positive 且我們預測為 Positive 的後驗機率，第二個參數要放 真實為 Positive 且我們預測為 Positive 的後驗機率
+
+```{r}
+library("PRROC")
+lda.fit <- lda(Class ~ ., data = train)
+pred <- predict(lda.fit, newdata = test, type = "response")
+pr <- prediction(pred$posterior[,2], test$Class)
+```
+
+PR Curve : 
+
+> In PR space the goal is to be in the upper-right-hand corner。
+
+對比於 ROC 會往左上，PR Curve 目標為往右上角逼近。而對於一個隨機的分類模型來說，AUC 會接近 0.5，而 PRAUC 會接近 0。
+
+```{r}
+prc_dataFrame <- data.frame(pred, test$Class)
+prc <- pr.curve(prc_dataFrame[prc_dataFrame$test.Class == 1,]$posterior.1,
+                prc_dataFrame[prc_dataFrame$test.Class == 0,]$posterior.1,
+                curve = T)
+plot(prc)
+```
+
